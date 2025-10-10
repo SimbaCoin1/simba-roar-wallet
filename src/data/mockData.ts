@@ -54,14 +54,51 @@ export const mockTransactions: Transaction[] = [
   },
 ];
 
+// Mock transaction data for second wallet
+const mockTransactions2: Transaction[] = [
+  {
+    id: '8',
+    date: new Date('2025-10-10T16:00:00'),
+    amount: 85.00,
+    type: 'received',
+    address: 'SMC2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2',
+  },
+  {
+    id: '9',
+    date: new Date('2025-10-09T14:30:00'),
+    amount: -30.50,
+    type: 'sent',
+    address: 'SMC8X9Y0Z1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8',
+  },
+  {
+    id: '10',
+    date: new Date('2025-10-08T11:20:00'),
+    amount: 120.75,
+    type: 'received',
+    address: 'SMC4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4',
+  },
+];
+
 // Mock wallet data - PLACEHOLDER DATA
-export const mockWalletData: WalletData = {
-  publicKey: 'SMC1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7',
-  balance: 2530.35,
-  usdValue: 3795.53, // Assuming $1.50 per SMC
-  change24h: 5.24,
-  transactions: mockTransactions,
-};
+export const mockWallets: WalletData[] = [
+  {
+    publicKey: 'SMC1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7',
+    balance: 2530.35,
+    usdValue: 3795.53,
+    change24h: 5.24,
+    transactions: mockTransactions,
+  },
+  {
+    publicKey: 'SMC2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8',
+    balance: 1245.80,
+    usdValue: 1868.70,
+    change24h: -2.15,
+    transactions: mockTransactions2,
+  }
+];
+
+// Deprecated - keeping for backwards compatibility
+export const mockWalletData: WalletData = mockWallets[0];
 
 // Mock chart data - PLACEHOLDER DATA
 export const mockChartData: ChartDataPoint[] = [
