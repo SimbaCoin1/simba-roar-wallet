@@ -25,8 +25,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-full max-w-[414px] min-h-screen bg-background">
         <WalletHeader 
           balance={walletData.balance}
           usdValue={walletData.usdValue}
