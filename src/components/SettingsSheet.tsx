@@ -18,7 +18,7 @@ interface SettingsSheetProps {
 const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[100vh] overflow-y-auto">
+      <DrawerContent className="h-[100vh] overflow-y-auto max-w-[414px] mx-auto left-0 right-0">
         <DrawerHeader>
           <DrawerTitle>Settings</DrawerTitle>
         </DrawerHeader>
