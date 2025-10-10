@@ -12,6 +12,9 @@ const Index = () => {
   const [currentWalletIndex, setCurrentWalletIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [mouseStart, setMouseStart] = useState(0);
+  const [mouseEnd, setMouseEnd] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const currentWallet = mockWallets[currentWalletIndex];
   const hasMultipleWallets = mockWallets.length > 1;
@@ -65,13 +68,58 @@ const Index = () => {
     setTouchEnd(0);
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setMouseStart(e.clientX);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setMouseEnd(e.clientX);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    if (!mouseStart || !mouseEnd) {
+      setIsDragging(false);
+      return;
+    }
+    
+    const distance = mouseStart - mouseEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleSwipe('left');
+    } else if (isRightSwipe) {
+      handleSwipe('right');
+    }
+
+    setMouseStart(0);
+    setMouseEnd(0);
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setMouseStart(0);
+      setMouseEnd(0);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div 
-        className="w-full max-w-[414px] min-h-screen bg-background relative"
+        className="w-full max-w-[414px] min-h-screen bg-background relative cursor-grab active:cursor-grabbing"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Swipe indicators */}
         {hasMultipleWallets && (
