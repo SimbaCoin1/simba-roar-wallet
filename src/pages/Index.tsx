@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WalletHeader from '@/components/WalletHeader';
 import WalletCard from '@/components/WalletCard';
 import BalanceChart from '@/components/BalanceChart';
@@ -22,13 +22,13 @@ const Index = () => {
   const hasMultipleWallets = mockWallets.length > 1;
 
   // Update current wallet index when carousel changes
-  useState(() => {
+  useEffect(() => {
     if (!api) return;
 
     api.on("select", () => {
       setCurrentWalletIndex(api.selectedScrollSnap());
     });
-  });
+  }, [api]);
 
   const handleSend = () => {
     toast({
