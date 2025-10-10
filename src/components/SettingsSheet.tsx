@@ -1,9 +1,9 @@
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -17,13 +17,13 @@ interface SettingsSheetProps {
 
 const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
-        </SheetHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="h-[100vh] overflow-y-auto">
+        <DrawerHeader>
+          <DrawerTitle>Settings</DrawerTitle>
+        </DrawerHeader>
 
-        <Tabs defaultValue="security" className="mt-6">
+        <Tabs defaultValue="security" className="mt-6 px-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -123,8 +123,8 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
             </div>
           </TabsContent>
         </Tabs>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
