@@ -4,7 +4,7 @@ import WalletCard from '@/components/WalletCard';
 import BalanceChart from '@/components/BalanceChart';
 import ActionButtons from '@/components/ActionButtons';
 import TransactionsList from '@/components/TransactionsList';
-import { mockWallets, mockChartData } from '@/data/mockData';
+import { mockWallets } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 import {
   Carousel,
@@ -49,8 +49,7 @@ const Index = () => {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-full max-w-[414px] min-h-screen bg-background">
         <WalletHeader 
-          balance={currentWallet.balance}
-          usdValue={currentWallet.usdValue}
+          smcPrice={currentWallet.usdValue / currentWallet.balance}
           change24h={currentWallet.change24h}
         />
 
@@ -73,7 +72,7 @@ const Index = () => {
           </Carousel>
         </div>
         
-        <BalanceChart data={mockChartData} />
+        <BalanceChart data={currentWallet.chartData} />
         
         <ActionButtons onSend={handleSend} onReceive={handleReceive} />
         

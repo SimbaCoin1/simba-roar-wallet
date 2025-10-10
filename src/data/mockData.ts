@@ -79,6 +79,26 @@ const mockTransactions2: Transaction[] = [
   },
 ];
 
+// Mock chart data for wallet 1
+export const mockChartData1: ChartDataPoint[] = [
+  { time: '00:00', value: 2400 },
+  { time: '04:00', value: 2420 },
+  { time: '08:00', value: 2385 },
+  { time: '12:00', value: 2450 },
+  { time: '16:00', value: 2480 },
+  { time: '20:00', value: 2530.35 },
+];
+
+// Mock chart data for wallet 2
+export const mockChartData2: ChartDataPoint[] = [
+  { time: '00:00', value: 1200 },
+  { time: '04:00', value: 1180 },
+  { time: '08:00', value: 1220 },
+  { time: '12:00', value: 1210 },
+  { time: '16:00', value: 1235 },
+  { time: '20:00', value: 1245.80 },
+];
+
 // Mock wallet data - PLACEHOLDER DATA
 export const mockWallets: WalletData[] = [
   {
@@ -87,6 +107,7 @@ export const mockWallets: WalletData[] = [
     usdValue: 3795.53,
     change24h: 5.24,
     transactions: mockTransactions,
+    chartData: mockChartData1,
   },
   {
     publicKey: 'SMC2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0T1U2V3W4X5Y6Z7A8',
@@ -94,6 +115,7 @@ export const mockWallets: WalletData[] = [
     usdValue: 1868.70,
     change24h: -2.15,
     transactions: mockTransactions2,
+    chartData: mockChartData2,
   }
 ];
 

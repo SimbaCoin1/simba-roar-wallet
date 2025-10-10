@@ -16,6 +16,7 @@ export interface WalletData {
   usdValue: number;
   change24h: number;
   transactions: Transaction[];
+  chartData: ChartDataPoint[];
 }
 
 export interface ChartDataPoint {
