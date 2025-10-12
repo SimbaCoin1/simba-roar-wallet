@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowDownRight, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AddWalletDialog from './AddWalletDialog';
 import SettingsSheet from './SettingsSheet';
+import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 
 interface WalletHeaderProps {
   smcPrice: number;
@@ -38,9 +39,9 @@ const WalletHeader = ({ smcPrice, change24h }: WalletHeaderProps) => {
 
         <div className="flex items-center gap-2 mb-6">
           <img 
-            src="https://api.dicebear.com/7.x/shapes/svg?seed=simba&backgroundColor=fbbf24" 
-            alt="Simba Logo" 
-            className="w-10 h-10 rounded-full"
+            src={simbaCoinLogo} 
+            alt="Simba Coin Logo" 
+            className="w-10 h-10 rounded-full object-cover"
           />
           <h1 className="text-2xl font-bold">Simba Wallet</h1>
         </div>
