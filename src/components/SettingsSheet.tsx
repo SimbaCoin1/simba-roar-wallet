@@ -13,9 +13,81 @@ import { ChevronRight } from "lucide-react";
 interface SettingsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onWalletDeleted?: () => void;
 }
 
-const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
+const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetProps) => {
+  const [showSeed, setShowSeed] = useState(false);
+  const [seedPassword, setSeedPassword] = useState('');
+  const [mnemonic, setMnemonic] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleViewSeed = () => {
+    try {
+      const wallet = walletManager.unlockWallet(seedPassword);
+      setMnemonic(wallet.mnemonic);
+      setShowSeed(true);
+      setSeedPassword('');
+    } catch (error) {
+      toast({
+        title: 'Failed to view seed',
+        description: 'Invalid password',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleChangePassword = () => {
+    if (newPassword.length < 8) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 8 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: 'Passwords do not match',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      walletManager.changePassword(oldPassword, newPassword);
+      toast({
+        title: 'Password changed',
+        description: 'Your password has been updated successfully',
+      });
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error) {
+      toast({
+        title: 'Failed to change password',
+        description: 'Invalid current password',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteWallet = () => {
+    walletManager.deleteWallet();
+    toast({
+      title: 'Wallet deleted',
+      description: 'Your wallet has been removed from this device',
+    });
+    setDeleteDialogOpen(false);
+    onOpenChange(false);
+    if (onWalletDeleted) {
+      onWalletDeleted();
+    }
+  };
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[100vh] overflow-y-auto max-w-[414px] mx-auto left-0 right-0">
@@ -124,6 +196,27 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
           </TabsContent>
         </Tabs>
       </DrawerContent>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Delete Wallet
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Make sure you have backed up your seed phrase.
+              Without it, you will lose access to your funds permanently.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteWallet} className="bg-destructive hover:bg-destructive/90">
+              Delete Wallet
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Drawer>
   );
 };

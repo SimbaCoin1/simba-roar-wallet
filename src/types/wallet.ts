@@ -1,18 +1,18 @@
-// Placeholder types for Simba Wallet
-// TODO: Replace with actual blockchain integration
-
 export interface Transaction {
   id: string;
+  hash: string;
   date: Date;
   amount: number;
   type: 'sent' | 'received';
   address: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  blockNumber?: number;
 }
 
 export interface WalletData {
-  publicKey: string;
-  privateKey?: string;
+  address: string;
   balance: number;
+  ethBalance: number;
   usdValue: number;
   change24h: number;
   transactions: Transaction[];
@@ -22,4 +22,10 @@ export interface WalletData {
 export interface ChartDataPoint {
   time: string;
   value: number;
+}
+
+export interface UnlockedWalletState {
+  address: string;
+  privateKey: string;
+  mnemonic: string;
 }
