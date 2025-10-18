@@ -4,94 +4,212 @@ import WalletCard from '@/components/WalletCard';
 import BalanceChart from '@/components/BalanceChart';
 import ActionButtons from '@/components/ActionButtons';
 import TransactionsList from '@/components/TransactionsList';
-import { mockWallets } from '@/data/mockData';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  type CarouselApi,
-} from "@/components/ui/carousel";
+import WalletOnboarding from '@/components/WalletOnboarding';
+import CreateWalletFlow from '@/components/CreateWalletFlow';
+import ImportWalletFlow from '@/components/ImportWalletFlow';
+import UnlockWallet from '@/components/UnlockWallet';
+import ReceiveDialog from '@/components/ReceiveDialog';
+import SendDialog from '@/components/SendDialog';
+import { walletManager } from '@/lib/walletManager';
+import { blockchainService } from '@/lib/blockchainService';
+import { WalletData, Transaction } from '@/types/wallet';
+import { mockChartData1 } from '@/data/mockData';
+import { Loader2 } from 'lucide-react';
+
+type AppState = 'onboarding' | 'create' | 'import' | 'locked' | 'unlocked';
 
 const Index = () => {
-  const { toast } = useToast();
-  const [api, setApi] = useState<CarouselApi>();
-  const [currentWalletIndex, setCurrentWalletIndex] = useState(0);
+  const [appState, setAppState] = useState<AppState>('onboarding');
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [unlockedWallet, setUnlockedWallet] = useState<{ address: string; privateKey: string; mnemonic: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [receiveOpen, setReceiveOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const smcPrice = 1.50; // Mock price for now
 
-  const currentWallet = mockWallets[currentWalletIndex];
-  const hasMultipleWallets = mockWallets.length > 1;
-
-  // Update current wallet index when carousel changes
   useEffect(() => {
-    if (!api) return;
+    // Check if wallet exists
+    if (walletManager.hasWallet()) {
+      setAppState('locked');
+    } else {
+      setAppState('onboarding');
+    }
+    setLoading(false);
+  }, []);
 
-    api.on("select", () => {
-      setCurrentWalletIndex(api.selectedScrollSnap());
-    });
-  }, [api]);
+  useEffect(() => {
+    if (unlockedWallet) {
+      loadWalletData();
+      
+      // Start auto-lock timer
+      walletManager.startAutoLock(() => {
+        handleLock();
+      });
+
+      // Refresh data periodically
+      const interval = setInterval(() => {
+        loadWalletData();
+      }, 30000); // Every 30 seconds
+
+      return () => {
+        clearInterval(interval);
+        walletManager.clearAutoLock();
+      };
+    }
+  }, [unlockedWallet]);
+
+  const loadWalletData = async () => {
+    if (!unlockedWallet) return;
+
+    try {
+      const [balance, ethBalance, txHistory] = await Promise.all([
+        blockchainService.getBalance(unlockedWallet.address),
+        blockchainService.getEthBalance(unlockedWallet.address),
+        blockchainService.getTransactionHistory(unlockedWallet.address),
+      ]);
+
+      const transactions: Transaction[] = txHistory.map((tx) => ({
+        id: tx.hash,
+        hash: tx.hash,
+        date: new Date(tx.timestamp),
+        amount: parseFloat(tx.value),
+        type: tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? 'received' : 'sent',
+        address: tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? tx.from : tx.to,
+        status: tx.status,
+        blockNumber: tx.blockNumber,
+      }));
+
+      setWalletData({
+        address: unlockedWallet.address,
+        balance,
+        ethBalance,
+        usdValue: balance * smcPrice,
+        change24h: 0, // TODO: Calculate from price history
+        transactions,
+        chartData: mockChartData1, // TODO: Generate from real data
+      });
+    } catch (error) {
+      console.error('Error loading wallet data:', error);
+    }
+  };
+
+  const handleUnlock = (wallet: { address: string; privateKey: string; mnemonic: string }) => {
+    setUnlockedWallet(wallet);
+    setAppState('unlocked');
+  };
+
+  const handleLock = () => {
+    setUnlockedWallet(null);
+    setWalletData(null);
+    setAppState('locked');
+    walletManager.clearAutoLock();
+  };
+
+  const handleWalletCreated = () => {
+    setAppState('locked');
+  };
 
   const handleSend = () => {
-    toast({
-      title: "Send Feature",
-      description: "Send functionality will be integrated with Simba Coin blockchain",
-    });
+    setSendOpen(true);
+    walletManager.resetAutoLock(() => handleLock());
   };
 
   const handleReceive = () => {
-    toast({
-      title: "Receive Feature", 
-      description: "Receive functionality will be integrated with Simba Coin blockchain",
-    });
+    setReceiveOpen(true);
+    walletManager.resetAutoLock(() => handleLock());
   };
 
+  const handleTransactionComplete = () => {
+    loadWalletData();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (appState === 'onboarding') {
+    return (
+      <WalletOnboarding
+        onCreateNew={() => setAppState('create')}
+        onImport={() => setAppState('import')}
+      />
+    );
+  }
+
+  if (appState === 'create') {
+    return (
+      <CreateWalletFlow
+        onComplete={handleWalletCreated}
+        onBack={() => setAppState('onboarding')}
+      />
+    );
+  }
+
+  if (appState === 'import') {
+    return (
+      <ImportWalletFlow
+        onComplete={handleWalletCreated}
+        onBack={() => setAppState('onboarding')}
+      />
+    );
+  }
+
+  if (appState === 'locked') {
+    return <UnlockWallet onUnlock={handleUnlock} />;
+  }
+
+  if (!walletData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-[414px] min-h-screen bg-background">
-        <WalletHeader 
-          smcPrice={currentWallet.usdValue / currentWallet.balance}
-          change24h={currentWallet.change24h}
+    <div className="min-h-screen bg-background pb-20">
+      <div className="max-w-2xl mx-auto">
+        <WalletHeader
+          smcPrice={smcPrice}
+          onLock={handleLock}
+          onWalletDeleted={() => {
+            setUnlockedWallet(null);
+            setWalletData(null);
+            setAppState('onboarding');
+          }}
         />
 
-        <div className="px-6 mb-6">
-          <Carousel
-            setApi={setApi}
-            opts={{
-              align: "start",
-              loop: false,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {mockWallets.map((wallet, index) => (
-                <CarouselItem key={index} className="pl-4 basis-[85%]">
-                  <WalletCard wallet={wallet} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
+        <div className="mb-6 px-6">
+          <WalletCard wallet={walletData} />
         </div>
-        
-        <BalanceChart data={currentWallet.chartData} />
-        
-        <ActionButtons onSend={handleSend} onReceive={handleReceive} />
-        
-        <TransactionsList transactions={currentWallet.transactions} />
 
-        {/* Wallet indicator dots */}
-        {hasMultipleWallets && (
-          <div className="flex justify-center gap-2 py-4">
-            {mockWallets.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  index === currentWalletIndex 
-                    ? 'bg-primary w-6' 
-                    : 'bg-muted-foreground/30'
-                }`}
-              />
-            ))}
-          </div>
+        <BalanceChart data={walletData.chartData} />
+
+        <ActionButtons onSend={handleSend} onReceive={handleReceive} />
+
+        <TransactionsList transactions={walletData.transactions} />
+
+        {unlockedWallet && (
+          <>
+            <ReceiveDialog
+              open={receiveOpen}
+              onOpenChange={setReceiveOpen}
+              address={unlockedWallet.address}
+            />
+
+            <SendDialog
+              open={sendOpen}
+              onOpenChange={setSendOpen}
+              privateKey={unlockedWallet.privateKey}
+              balance={walletData.balance}
+              ethBalance={walletData.ethBalance}
+              onTransactionComplete={handleTransactionComplete}
+            />
+          </>
         )}
       </div>
     </div>

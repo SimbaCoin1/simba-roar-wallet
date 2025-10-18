@@ -1,32 +1,33 @@
 import { useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, Plus, MoreVertical } from 'lucide-react';
+import { MoreVertical, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AddWalletDialog from './AddWalletDialog';
 import SettingsSheet from './SettingsSheet';
 import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 
 interface WalletHeaderProps {
   smcPrice: number;
-  change24h: number;
+  onLock?: () => void;
+  onWalletDeleted?: () => void;
 }
 
-const WalletHeader = ({ smcPrice, change24h }: WalletHeaderProps) => {
-  const isPositive = change24h >= 0;
-  const [showAddWallet, setShowAddWallet] = useState(false);
+const WalletHeader = ({ smcPrice, onLock, onWalletDeleted }: WalletHeaderProps) => {
   const [showSettings, setShowSettings] = useState(false);
 
   return (
     <>
       <div className="py-6 px-6 relative">
         <div className="absolute top-4 right-4 flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowAddWallet(true)}
-            className="rounded-full"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+          {onLock && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onLock}
+              className="rounded-full"
+              title="Lock wallet"
+            >
+              <Lock className="w-5 h-5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -55,16 +56,15 @@ const WalletHeader = ({ smcPrice, change24h }: WalletHeaderProps) => {
               </h2>
               <span className="text-sm text-muted-foreground">SMC</span>
             </div>
-            <div className={`flex items-center gap-1 ${isPositive ? 'text-success' : 'text-destructive'}`}>
-              {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-              <span className="text-sm font-medium">{Math.abs(change24h).toFixed(2)}%</span>
-            </div>
           </div>
         </div>
       </div>
       
-      <AddWalletDialog open={showAddWallet} onOpenChange={setShowAddWallet} />
-      <SettingsSheet open={showSettings} onOpenChange={setShowSettings} />
+      <SettingsSheet 
+        open={showSettings} 
+        onOpenChange={setShowSettings}
+        onWalletDeleted={onWalletDeleted}
+      />
     </>
   );
 };
