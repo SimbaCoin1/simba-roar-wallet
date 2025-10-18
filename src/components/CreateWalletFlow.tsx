@@ -26,7 +26,10 @@ const CreateWalletFlow = ({ onComplete, onBack }: CreateWalletFlowProps) => {
   const words = mnemonic.split(' ');
 
   const handleSetPassword = () => {
+    console.log('handleSetPassword called', { passwordLength: password.length, confirmPasswordLength: confirmPassword.length });
+    
     if (password.length < 8) {
+      console.log('Password too short');
       toast({
         title: 'Password too short',
         description: 'Password must be at least 8 characters',
@@ -36,6 +39,7 @@ const CreateWalletFlow = ({ onComplete, onBack }: CreateWalletFlowProps) => {
     }
 
     if (password !== confirmPassword) {
+      console.log('Passwords do not match');
       toast({
         title: 'Passwords do not match',
         description: 'Please make sure both passwords are the same',
@@ -44,10 +48,22 @@ const CreateWalletFlow = ({ onComplete, onBack }: CreateWalletFlowProps) => {
       return;
     }
 
-    const wallet = walletManager.generateWallet();
-    setMnemonic(wallet.mnemonic);
-    setAddress(wallet.address);
-    setStep('reveal');
+    console.log('Generating wallet...');
+    try {
+      const wallet = walletManager.generateWallet();
+      console.log('Wallet generated successfully', { address: wallet.address });
+      setMnemonic(wallet.mnemonic);
+      setAddress(wallet.address);
+      setStep('reveal');
+      console.log('Moving to reveal step');
+    } catch (error) {
+      console.error('Error generating wallet:', error);
+      toast({
+        title: 'Error creating wallet',
+        description: 'Failed to generate wallet. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCopy = () => {
