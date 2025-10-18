@@ -1,6 +1,12 @@
 import { ethers } from 'ethers';
 import * as bip39 from 'bip39';
 import CryptoJS from 'crypto-js';
+import { Buffer } from 'buffer';
+
+// Polyfill Buffer for browser
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
 
 const WALLET_STORAGE_KEY = 'simba_encrypted_wallet';
 const LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
