@@ -43,3 +43,8 @@ export interface MultiWalletStorage {
   wallets: StoredWallet[];
   version: number;
 }
+
+export interface BalanceSnapshot {
+  timestamp: number;
+  balance: number;
+}

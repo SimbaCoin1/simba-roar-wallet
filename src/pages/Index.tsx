@@ -14,8 +14,8 @@ import SendDialog from '@/components/SendDialog';
 import AddWalletDialog from '@/components/AddWalletDialog';
 import { walletManager } from '@/lib/walletManager';
 import { blockchainService } from '@/lib/blockchainService';
+import { balanceTracker } from '@/lib/balanceTracker';
 import { WalletData, Transaction, StoredWallet } from '@/types/wallet';
-import { mockChartData1 } from '@/data/mockData';
 import { Loader2 } from 'lucide-react';
 
 type AppState = 'onboarding' | 'create' | 'import' | 'locked' | 'unlocked';
@@ -58,13 +58,26 @@ const Index = () => {
         handleLock();
       });
 
-      // Refresh data periodically
-      const interval = setInterval(() => {
+      // Refresh data periodically (every 30 seconds)
+      const dataInterval = setInterval(() => {
         loadWalletData();
-      }, 30000); // Every 30 seconds
+      }, 30000);
+
+      // Record balance snapshot every hour
+      const snapshotInterval = setInterval(() => {
+        if (unlockedWallet) {
+          blockchainService.getBalance(unlockedWallet.address)
+            .then(balance => {
+              balanceTracker.addBalanceSnapshot(unlockedWallet.address, balance);
+              balanceTracker.cleanOldSnapshots(unlockedWallet.address);
+            })
+            .catch(err => console.error('Error recording balance snapshot:', err));
+        }
+      }, 60 * 60 * 1000); // Every hour
 
       return () => {
-        clearInterval(interval);
+        clearInterval(dataInterval);
+        clearInterval(snapshotInterval);
         walletManager.clearAutoLock();
       };
     }
@@ -91,6 +104,11 @@ const Index = () => {
         blockNumber: tx.blockNumber,
       }));
 
+      // Record balance snapshot and get chart data
+      balanceTracker.addBalanceSnapshot(unlockedWallet.address, balance);
+      balanceTracker.cleanOldSnapshots(unlockedWallet.address);
+      const chartData = balanceTracker.getChartData(unlockedWallet.address);
+
       setWalletData({
         address: unlockedWallet.address,
         balance,
@@ -98,7 +116,7 @@ const Index = () => {
         usdValue: balance * sbcPrice,
         change24h: 0,
         transactions,
-        chartData: mockChartData1,
+        chartData,
       });
 
       // Update balance in the map for the switcher
@@ -110,6 +128,7 @@ const Index = () => {
     } catch (error) {
       console.error('Error loading wallet data:', error);
       // Set wallet data with zeros if blockchain fails
+      const chartData = balanceTracker.getChartData(unlockedWallet.address);
       setWalletData({
         address: unlockedWallet.address,
         balance: 0,
@@ -117,7 +136,7 @@ const Index = () => {
         usdValue: 0,
         change24h: 0,
         transactions: [],
-        chartData: mockChartData1,
+        chartData,
       });
     }
   };
