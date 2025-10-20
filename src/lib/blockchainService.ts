@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-const INFURA_URL = import.meta.env.VITE_INFURA_URL;
+const INFURA_URL = 'https://mainnet.infura.io/v3/29605a9e846e4370a80155117bce1072';
 const SIMBACOIN_CONTRACT = '0x06d114e57e00789ea143685239f8e72611ff8cec';
 const SIMBACOIN_DECIMALS = 6;
 
