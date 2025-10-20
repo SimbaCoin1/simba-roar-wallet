@@ -225,6 +225,7 @@ const Index = () => {
       <WalletOnboarding
         onCreateNew={() => setAppState('create')}
         onImport={() => setAppState('import')}
+        onLogin={() => setAppState('locked')}
       />
     );
   }

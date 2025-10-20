@@ -6,9 +6,10 @@ import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 interface WalletOnboardingProps {
   onCreateNew: () => void;
   onImport: () => void;
+  onLogin: () => void;
 }
 
-const WalletOnboarding = ({ onCreateNew, onImport }: WalletOnboardingProps) => {
+const WalletOnboarding = ({ onCreateNew, onImport, onLogin }: WalletOnboardingProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-background to-muted/20">
       <Card className="max-w-md w-full p-8">
@@ -43,6 +44,15 @@ const WalletOnboarding = ({ onCreateNew, onImport }: WalletOnboardingProps) => {
             <Download className="w-5 h-5 mr-2" />
             Import Existing Wallet
           </Button>
+        </div>
+
+        <div className="text-center">
+          <button
+            onClick={onLogin}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+          >
+            Already have a wallet? Login here
+          </button>
         </div>
 
         <Card className="p-4 bg-muted/50 border-primary/20">
