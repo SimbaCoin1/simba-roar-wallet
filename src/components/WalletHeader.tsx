@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreVertical, Lock, Plus } from 'lucide-react';
+import { MoreVertical, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SettingsSheet from './SettingsSheet';
 import AddWalletDialog from './AddWalletDialog';
@@ -42,25 +42,13 @@ const WalletHeader = ({ smcPrice, onLock, onWalletDeleted, onAddWallet, onImport
           </Button>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <img 
-              src={simbaCoinLogo} 
-              alt="Simba Coin Logo" 
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <h1 className="text-2xl font-bold">Simba Wallet</h1>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowAddWallet(true)}
-            className="rounded-full"
-            title="Add wallet"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+        <div className="flex items-center gap-2 mb-6">
+          <img 
+            src={simbaCoinLogo} 
+            alt="Simba Coin Logo" 
+            className="w-10 h-10 rounded-full object-cover"
+          />
+          <h1 className="text-2xl font-bold">Simba Wallet</h1>
         </div>
       
         <div className="bg-muted/30 rounded-lg p-4 border">
@@ -70,7 +58,7 @@ const WalletHeader = ({ smcPrice, onLock, onWalletDeleted, onAddWallet, onImport
               <h2 className="text-3xl font-bold">
                 ${smcPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h2>
-              <span className="text-sm text-muted-foreground">SMC</span>
+              <span className="text-sm text-muted-foreground">SBC</span>
             </div>
           </div>
         </div>

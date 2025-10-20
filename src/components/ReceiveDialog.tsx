@@ -37,7 +37,7 @@ const ReceiveDialog = ({ open, onOpenChange, address }: ReceiveDialogProps) => {
         <DialogHeader>
           <DialogTitle>Receive Simbacoin</DialogTitle>
           <DialogDescription>
-            Share this address to receive SMC tokens
+            Share this address to receive SBC tokens
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +72,7 @@ const ReceiveDialog = ({ open, onOpenChange, address }: ReceiveDialogProps) => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center">
-              Only send Simbacoin (SMC) to this address
+              Only send Simbacoin (SBC) to this address
             </p>
           </div>
         </div>

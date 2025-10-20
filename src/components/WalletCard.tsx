@@ -1,20 +1,35 @@
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { WalletData } from '@/types/wallet';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Plus } from 'lucide-react';
 
 interface WalletCardProps {
   wallet: WalletData;
+  onAddWallet?: () => void;
 }
 
-const WalletCard = ({ wallet }: WalletCardProps) => {
+const WalletCard = ({ wallet, onAddWallet }: WalletCardProps) => {
   const isPositive = wallet.change24h >= 0;
 
   return (
     <Card className="p-8 border-2 min-h-[280px] flex flex-col justify-between">
       <div>
-        <p className="text-sm text-muted-foreground mb-1">Wallet</p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm text-muted-foreground">Wallet</p>
+          {onAddWallet && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onAddWallet}
+              className="h-8 gap-1.5 text-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Add Wallet
+            </Button>
+          )}
+        </div>
         <h2 className="text-6xl font-bold mb-2">
-          {wallet.balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-4xl">SMC</span>
+          {wallet.balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-4xl">SBC</span>
         </h2>
       </div>
       

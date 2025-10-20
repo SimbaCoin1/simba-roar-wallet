@@ -74,7 +74,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
                 }`}>
                   {tx.type === 'received' ? '+' : '-'}{tx.amount.toFixed(6)}
                 </p>
-                <p className="text-sm text-muted-foreground">SMC</p>
+                <p className="text-sm text-muted-foreground">SBC</p>
               </div>
             </div>
           </Card>

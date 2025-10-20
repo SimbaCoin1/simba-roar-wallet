@@ -81,7 +81,7 @@ const SendDialog = ({
     if (amountNum > balance) {
       toast({
         title: 'Insufficient balance',
-        description: `You only have ${balance.toFixed(6)} SMC`,
+        description: `You only have ${balance.toFixed(6)} SBC`,
         variant: 'destructive',
       });
       return;
@@ -200,7 +200,7 @@ const SendDialog = ({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-semibold">{amount} SMC</span>
+                <span className="font-semibold">{amount} SBC</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Gas Fee (estimated)</span>
@@ -244,7 +244,7 @@ const SendDialog = ({
         <DialogHeader>
           <DialogTitle>Send Simbacoin</DialogTitle>
           <DialogDescription>
-            Send SMC to another wallet
+            Send SBC to another wallet
           </DialogDescription>
         </DialogHeader>
 
@@ -261,7 +261,7 @@ const SendDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="amount">Amount (SMC)</Label>
+            <Label htmlFor="amount">Amount (SBC)</Label>
             <Input
               id="amount"
               type="number"
@@ -271,7 +271,7 @@ const SendDialog = ({
               placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Available: {balance.toFixed(6)} SMC
+              Available: {balance.toFixed(6)} SBC
             </p>
           </div>
 

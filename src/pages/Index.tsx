@@ -10,6 +10,7 @@ import ImportWalletFlow from '@/components/ImportWalletFlow';
 import UnlockWallet from '@/components/UnlockWallet';
 import ReceiveDialog from '@/components/ReceiveDialog';
 import SendDialog from '@/components/SendDialog';
+import AddWalletDialog from '@/components/AddWalletDialog';
 import { walletManager } from '@/lib/walletManager';
 import { blockchainService } from '@/lib/blockchainService';
 import { WalletData, Transaction } from '@/types/wallet';
@@ -25,7 +26,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const smcPrice = 1.50; // Mock price for now
+  const [showAddWallet, setShowAddWallet] = useState(false);
+  const sbcPrice = 1.50; // Mock price for now
 
   useEffect(() => {
     // Check if wallet exists
@@ -83,7 +85,7 @@ const Index = () => {
         address: unlockedWallet.address,
         balance,
         ethBalance,
-        usdValue: balance * smcPrice,
+        usdValue: balance * sbcPrice,
         change24h: 0,
         transactions,
         chartData: mockChartData1,
@@ -184,7 +186,7 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
         <WalletHeader
-          smcPrice={smcPrice}
+          smcPrice={sbcPrice}
           onLock={handleLock}
           onWalletDeleted={() => {
             setUnlockedWallet(null);
@@ -202,7 +204,10 @@ const Index = () => {
         />
 
         <div className="mb-6 px-6">
-          <WalletCard wallet={walletData} />
+          <WalletCard 
+            wallet={walletData}
+            onAddWallet={() => setShowAddWallet(true)}
+          />
         </div>
 
         <BalanceChart data={walletData.chartData} />
@@ -229,6 +234,21 @@ const Index = () => {
             />
           </>
         )}
+
+        <AddWalletDialog
+          open={showAddWallet}
+          onOpenChange={setShowAddWallet}
+          onCreateNew={() => {
+            setShowAddWallet(false);
+            handleLock();
+            setTimeout(() => setAppState('create'), 100);
+          }}
+          onImport={() => {
+            setShowAddWallet(false);
+            handleLock();
+            setTimeout(() => setAppState('import'), 100);
+          }}
+        />
       </div>
     </div>
   );
