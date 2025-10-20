@@ -57,7 +57,10 @@ const ImportWalletFlow = ({ onComplete, onBack }: ImportWalletFlowProps) => {
         mnemonicToSave = trimmedKey;
       }
 
-      walletManager.saveWallet(mnemonicToSave, wallet.address, password);
+      // Add wallet to the multi-wallet array
+      walletManager.addWallet(mnemonicToSave, wallet.address, password);
+      // Store password temporarily for multi-wallet unlock
+      sessionStorage.setItem('temp_password', password);
 
       toast({
         title: 'Wallet imported successfully',

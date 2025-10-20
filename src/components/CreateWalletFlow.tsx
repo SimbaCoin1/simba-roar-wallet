@@ -76,7 +76,10 @@ const CreateWalletFlow = ({ onComplete, onBack }: CreateWalletFlowProps) => {
   };
 
   const handleContinue = () => {
-    walletManager.saveWallet(mnemonic, address, password);
+    // Add wallet to the multi-wallet array
+    walletManager.addWallet(mnemonic, address, password);
+    // Store password temporarily for multi-wallet unlock
+    sessionStorage.setItem('temp_password', password);
     toast({
       title: 'Wallet created successfully',
       description: `Your wallet address: ${address.slice(0, 10)}...`,

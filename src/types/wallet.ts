@@ -29,3 +29,17 @@ export interface UnlockedWalletState {
   privateKey: string;
   mnemonic: string;
 }
+
+export interface StoredWallet {
+  id: string;
+  name: string;
+  encryptedMnemonic: string;
+  address: string;
+  createdAt: number;
+  isActive: boolean;
+}
+
+export interface MultiWalletStorage {
+  wallets: StoredWallet[];
+  version: number;
+}

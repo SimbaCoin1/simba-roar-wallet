@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import WalletHeader from '@/components/WalletHeader';
 import WalletCard from '@/components/WalletCard';
+import WalletSwitcher from '@/components/WalletSwitcher';
 import BalanceChart from '@/components/BalanceChart';
 import ActionButtons from '@/components/ActionButtons';
 import TransactionsList from '@/components/TransactionsList';
@@ -13,7 +14,7 @@ import SendDialog from '@/components/SendDialog';
 import AddWalletDialog from '@/components/AddWalletDialog';
 import { walletManager } from '@/lib/walletManager';
 import { blockchainService } from '@/lib/blockchainService';
-import { WalletData, Transaction } from '@/types/wallet';
+import { WalletData, Transaction, StoredWallet } from '@/types/wallet';
 import { mockChartData1 } from '@/data/mockData';
 import { Loader2 } from 'lucide-react';
 
@@ -27,11 +28,20 @@ const Index = () => {
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
+  const [allWallets, setAllWallets] = useState<StoredWallet[]>([]);
+  const [activeWalletId, setActiveWalletId] = useState<string>('');
+  const [walletBalances, setWalletBalances] = useState<Map<string, number>>(new Map());
   const sbcPrice = 1.50; // Mock price for now
 
   useEffect(() => {
-    // Check if wallet exists
+    // Check if wallet exists and load all wallets
     if (walletManager.hasWallet()) {
+      const wallets = walletManager.getAllWallets();
+      setAllWallets(wallets);
+      const activeWallet = walletManager.getActiveWallet();
+      if (activeWallet) {
+        setActiveWalletId(activeWallet.id);
+      }
       setAppState('locked');
     } else {
       setAppState('onboarding');
@@ -58,7 +68,7 @@ const Index = () => {
         walletManager.clearAutoLock();
       };
     }
-  }, [unlockedWallet]);
+  }, [unlockedWallet, activeWalletId]);
 
   const loadWalletData = async () => {
     if (!unlockedWallet) return;
@@ -90,6 +100,13 @@ const Index = () => {
         transactions,
         chartData: mockChartData1,
       });
+
+      // Update balance in the map for the switcher
+      setWalletBalances(prev => {
+        const newMap = new Map(prev);
+        newMap.set(activeWalletId, balance);
+        return newMap;
+      });
     } catch (error) {
       console.error('Error loading wallet data:', error);
       // Set wallet data with zeros if blockchain fails
@@ -108,6 +125,13 @@ const Index = () => {
   const handleUnlock = (wallet: { address: string; privateKey: string; mnemonic: string }) => {
     setUnlockedWallet(wallet);
     setAppState('unlocked');
+    // Reload wallet list in case of changes
+    const wallets = walletManager.getAllWallets();
+    setAllWallets(wallets);
+    const activeWallet = walletManager.getActiveWallet();
+    if (activeWallet) {
+      setActiveWalletId(activeWallet.id);
+    }
   };
 
   const handleLock = () => {
@@ -118,7 +142,36 @@ const Index = () => {
   };
 
   const handleWalletCreated = () => {
+    // Reload wallets list
+    const wallets = walletManager.getAllWallets();
+    setAllWallets(wallets);
+    const activeWallet = walletManager.getActiveWallet();
+    if (activeWallet) {
+      setActiveWalletId(activeWallet.id);
+    }
     setAppState('locked');
+  };
+
+  const handleSwitchWallet = async (walletId: string) => {
+    walletManager.switchWallet(walletId);
+    setActiveWalletId(walletId);
+    
+    // Reload wallet data for the newly selected wallet
+    const activeWallet = walletManager.getActiveWallet();
+    if (activeWallet && unlockedWallet) {
+      // Need to unlock the new wallet (password already verified)
+      try {
+        const password = sessionStorage.getItem('temp_password');
+        if (password) {
+          const newUnlockedWallet = walletManager.unlockWallet(password, walletId);
+          setUnlockedWallet(newUnlockedWallet);
+        }
+      } catch (error) {
+        console.error('Error switching wallet:', error);
+      }
+    }
+    
+    walletManager.resetAutoLock(() => handleLock());
   };
 
   const handleSend = () => {
@@ -191,16 +244,18 @@ const Index = () => {
           onWalletDeleted={() => {
             setUnlockedWallet(null);
             setWalletData(null);
+            setAllWallets([]);
             setAppState('onboarding');
           }}
-          onAddWallet={() => {
-            handleLock();
-            setTimeout(() => setAppState('create'), 100);
-          }}
-          onImportWallet={() => {
-            handleLock();
-            setTimeout(() => setAppState('import'), 100);
-          }}
+          onAddWallet={() => setShowAddWallet(true)}
+          onImportWallet={() => setShowAddWallet(true)}
+        />
+
+        <WalletSwitcher
+          wallets={allWallets}
+          activeWalletId={activeWalletId}
+          onSwitchWallet={handleSwitchWallet}
+          walletBalances={walletBalances}
         />
 
         <div className="mb-6 px-6">
