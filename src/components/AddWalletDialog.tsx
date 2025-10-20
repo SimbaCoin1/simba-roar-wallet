@@ -11,9 +11,21 @@ import { Plus, Download } from "lucide-react";
 interface AddWalletDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreateNew: () => void;
+  onImport: () => void;
 }
 
-const AddWalletDialog = ({ open, onOpenChange }: AddWalletDialogProps) => {
+const AddWalletDialog = ({ open, onOpenChange, onCreateNew, onImport }: AddWalletDialogProps) => {
+  const handleCreateNew = () => {
+    onOpenChange(false);
+    onCreateNew();
+  };
+
+  const handleImport = () => {
+    onOpenChange(false);
+    onImport();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -25,12 +37,20 @@ const AddWalletDialog = ({ open, onOpenChange }: AddWalletDialogProps) => {
         </DialogHeader>
         
         <div className="flex flex-col gap-3 mt-4">
-          <Button className="w-full h-14 text-base" variant="default">
+          <Button 
+            className="w-full h-14 text-base" 
+            variant="default"
+            onClick={handleCreateNew}
+          >
             <Plus className="w-5 h-5 mr-2" />
             Create New Wallet
           </Button>
           
-          <Button className="w-full h-14 text-base" variant="outline">
+          <Button 
+            className="w-full h-14 text-base" 
+            variant="outline"
+            onClick={handleImport}
+          >
             <Download className="w-5 h-5 mr-2" />
             Import Wallet
           </Button>

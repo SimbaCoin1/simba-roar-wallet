@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import { MoreVertical, Lock } from 'lucide-react';
+import { MoreVertical, Lock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SettingsSheet from './SettingsSheet';
+import AddWalletDialog from './AddWalletDialog';
 import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 
 interface WalletHeaderProps {
   smcPrice: number;
   onLock?: () => void;
   onWalletDeleted?: () => void;
+  onAddWallet?: () => void;
+  onImportWallet?: () => void;
 }
 
-const WalletHeader = ({ smcPrice, onLock, onWalletDeleted }: WalletHeaderProps) => {
+const WalletHeader = ({ smcPrice, onLock, onWalletDeleted, onAddWallet, onImportWallet }: WalletHeaderProps) => {
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddWallet, setShowAddWallet] = useState(false);
 
   return (
     <>
@@ -38,13 +42,25 @@ const WalletHeader = ({ smcPrice, onLock, onWalletDeleted }: WalletHeaderProps) 
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 mb-6">
-          <img 
-            src={simbaCoinLogo} 
-            alt="Simba Coin Logo" 
-            className="w-10 h-10 rounded-full object-cover"
-          />
-          <h1 className="text-2xl font-bold">Simba Wallet</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <img 
+              src={simbaCoinLogo} 
+              alt="Simba Coin Logo" 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <h1 className="text-2xl font-bold">Simba Wallet</h1>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowAddWallet(true)}
+            className="rounded-full"
+            title="Add wallet"
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
         </div>
       
         <div className="bg-muted/30 rounded-lg p-4 border">
@@ -64,6 +80,13 @@ const WalletHeader = ({ smcPrice, onLock, onWalletDeleted }: WalletHeaderProps) 
         open={showSettings} 
         onOpenChange={setShowSettings}
         onWalletDeleted={onWalletDeleted}
+      />
+
+      <AddWalletDialog
+        open={showAddWallet}
+        onOpenChange={setShowAddWallet}
+        onCreateNew={() => onAddWallet?.()}
+        onImport={() => onImportWallet?.()}
       />
     </>
   );

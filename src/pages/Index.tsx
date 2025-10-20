@@ -191,6 +191,14 @@ const Index = () => {
             setWalletData(null);
             setAppState('onboarding');
           }}
+          onAddWallet={() => {
+            handleLock();
+            setTimeout(() => setAppState('create'), 100);
+          }}
+          onImportWallet={() => {
+            handleLock();
+            setTimeout(() => setAppState('import'), 100);
+          }}
         />
 
         <div className="mb-6 px-6">

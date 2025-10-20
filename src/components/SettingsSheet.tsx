@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronRight, Eye, Key, Trash2, AlertTriangle } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, Key, Trash2, AlertTriangle, Copy } from "lucide-react";
 import { walletManager } from '@/lib/walletManager';
 import { toast } from '@/hooks/use-toast';
 
@@ -39,6 +39,7 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showSeedPassword, setShowSeedPassword] = useState(false);
 
   const handleViewSeed = () => {
     try {
@@ -46,6 +47,10 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
       setMnemonic(wallet.mnemonic);
       setShowSeed(true);
       setSeedPassword('');
+      toast({
+        title: 'Seed phrase revealed',
+        description: 'Keep it safe and never share it with anyone',
+      });
     } catch (error) {
       toast({
         title: 'Failed to view seed',
@@ -53,6 +58,14 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
         variant: 'destructive',
       });
     }
+  };
+
+  const handleCopySeed = () => {
+    navigator.clipboard.writeText(mnemonic);
+    toast({
+      title: 'Seed phrase copied',
+      description: 'Your seed phrase has been copied to clipboard',
+    });
   };
 
   const handleChangePassword = () => {
@@ -119,6 +132,124 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6 mt-6">
+            {/* View Seed Phrase Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-destructive mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                View Seed Phrase
+              </h3>
+              
+              {!showSeed ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Enter your password to view your seed phrase. Make sure no one is watching your screen.
+                  </p>
+                  <div className="relative">
+                    <Input
+                      type={showSeedPassword ? 'text' : 'password'}
+                      placeholder="Enter password"
+                      value={seedPassword}
+                      onChange={(e) => setSeedPassword(e.target.value)}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSeedPassword(!showSeedPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSeedPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <Button 
+                    onClick={handleViewSeed} 
+                    className="w-full"
+                    disabled={!seedPassword}
+                  >
+                    Reveal Seed Phrase
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                    <p className="text-sm font-mono break-all text-destructive">
+                      {mnemonic}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCopySeed} className="flex-1">
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button onClick={() => setShowSeed(false)} variant="outline" className="flex-1">
+                      Hide
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Never share your seed phrase with anyone. Store it securely offline.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Change Password Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-destructive mb-4 flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Change Password
+              </h3>
+              <div className="space-y-3">
+                <Input
+                  type="password"
+                  placeholder="Current password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="New password (min 8 characters)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+                <Button 
+                  onClick={handleChangePassword}
+                  className="w-full"
+                  disabled={!oldPassword || !newPassword || !confirmNewPassword}
+                >
+                  Update Password
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Delete Wallet Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-destructive mb-4 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Delete Wallet
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Permanently remove this wallet from your device. Make sure you have backed up your seed phrase.
+              </p>
+              <Button 
+                onClick={() => setDeleteDialogOpen(true)}
+                variant="destructive"
+                className="w-full"
+              >
+                Delete Wallet
+              </Button>
+            </div>
+
+            <Separator />
+
             <div>
               <h3 className="text-lg font-semibold text-destructive mb-4">Biometrics</h3>
               <div className="flex items-center justify-between py-3">
