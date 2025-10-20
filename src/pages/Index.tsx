@@ -230,19 +230,23 @@ const Index = () => {
   }
 
   if (appState === 'create') {
+    const existingPassword = sessionStorage.getItem('temp_password') || undefined;
     return (
       <CreateWalletFlow
         onComplete={handleWalletCreated}
         onBack={() => setAppState('onboarding')}
+        existingPassword={existingPassword}
       />
     );
   }
 
   if (appState === 'import') {
+    const existingPassword = sessionStorage.getItem('temp_password') || undefined;
     return (
       <ImportWalletFlow
         onComplete={handleWalletCreated}
         onBack={() => setAppState('onboarding')}
+        existingPassword={existingPassword}
       />
     );
   }

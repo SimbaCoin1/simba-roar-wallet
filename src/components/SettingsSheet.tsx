@@ -36,7 +36,7 @@ interface SettingsSheetProps {
 const SettingsSheet = ({ open, onOpenChange, onWalletDeleted, activeWalletId, walletName }: SettingsSheetProps) => {
   const [showSeed, setShowSeed] = useState(false);
   const [seedPassword, setSeedPassword] = useState('');
-  const [mnemonic, setMnemonic] = useState('');
+  const [walletMnemonics, setWalletMnemonics] = useState<{ id: string; name: string; mnemonic: string }[]>([]);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -45,13 +45,21 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted, activeWalletId, wa
 
   const handleViewSeed = () => {
     try {
-      const wallet = walletManager.unlockWallet(seedPassword);
-      setMnemonic(wallet.mnemonic);
+      const allWallets = walletManager.getAllWallets();
+      const mnemonics = allWallets.map(wallet => {
+        const unlocked = walletManager.unlockWallet(seedPassword, wallet.id);
+        return {
+          id: wallet.id,
+          name: wallet.name,
+          mnemonic: unlocked.mnemonic
+        };
+      });
+      setWalletMnemonics(mnemonics);
       setShowSeed(true);
       setSeedPassword('');
       toast({
-        title: 'Seed phrase revealed',
-        description: 'Keep it safe and never share it with anyone',
+        title: 'Seed phrases revealed',
+        description: 'Keep them safe and never share with anyone',
       });
     } catch (error) {
       toast({
@@ -62,11 +70,11 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted, activeWalletId, wa
     }
   };
 
-  const handleCopySeed = () => {
+  const handleCopySeed = (mnemonic: string, walletName: string) => {
     navigator.clipboard.writeText(mnemonic);
     toast({
       title: 'Seed phrase copied',
-      description: 'Your seed phrase has been copied to clipboard',
+      description: `${walletName} seed phrase copied to clipboard`,
     });
   };
 
@@ -173,23 +181,31 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted, activeWalletId, wa
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-                    <p className="text-sm font-mono break-all text-destructive">
-                      {mnemonic}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleCopySeed} className="flex-1">
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy
-                    </Button>
-                    <Button onClick={() => setShowSeed(false)} variant="outline" className="flex-1">
-                      Hide
-                    </Button>
-                  </div>
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  {walletMnemonics.map((wallet) => (
+                    <div key={wallet.id} className="space-y-2">
+                      <h4 className="font-semibold text-sm">{wallet.name}</h4>
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                        <p className="text-sm font-mono break-all text-destructive">
+                          {wallet.mnemonic}
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => handleCopySeed(wallet.mnemonic, wallet.name)} 
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy {wallet.name}
+                      </Button>
+                    </div>
+                  ))}
+                  <Button onClick={() => setShowSeed(false)} variant="outline" className="w-full">
+                    Hide All
+                  </Button>
                   <p className="text-xs text-muted-foreground">
-                    Never share your seed phrase with anyone. Store it securely offline.
+                    Never share your seed phrases with anyone. Store them securely offline.
                   </p>
                 </div>
               )}

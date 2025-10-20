@@ -10,17 +10,27 @@ import { toast } from '@/hooks/use-toast';
 interface CreateWalletFlowProps {
   onComplete: () => void;
   onBack: () => void;
+  existingPassword?: string;
 }
 
-const CreateWalletFlow = ({ onComplete, onBack }: CreateWalletFlowProps) => {
-  const [step, setStep] = useState<'password' | 'reveal'>('password');
-  const [password, setPassword] = useState('');
+const CreateWalletFlow = ({ onComplete, onBack, existingPassword }: CreateWalletFlowProps) => {
+  const [step, setStep] = useState<'password' | 'reveal'>(existingPassword ? 'reveal' : 'password');
+  const [password, setPassword] = useState(existingPassword || '');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [mnemonic, setMnemonic] = useState('');
   const [address, setAddress] = useState('');
   const [showMnemonic, setShowMnemonic] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Generate wallet immediately if we have an existing password
+  useState(() => {
+    if (existingPassword) {
+      const wallet = walletManager.generateWallet();
+      setMnemonic(wallet.mnemonic);
+      setAddress(wallet.address);
+    }
+  });
 
   const words = mnemonic.split(' ');
 

@@ -12,14 +12,15 @@ import { toast } from '@/hooks/use-toast';
 interface ImportWalletFlowProps {
   onComplete: () => void;
   onBack: () => void;
+  existingPassword?: string;
 }
 
-const ImportWalletFlow = ({ onComplete, onBack }: ImportWalletFlowProps) => {
+const ImportWalletFlow = ({ onComplete, onBack, existingPassword }: ImportWalletFlowProps) => {
   const [importType, setImportType] = useState<'mnemonic' | 'privatekey'>('mnemonic');
   const [mnemonic, setMnemonic] = useState('');
   const [privateKey, setPrivateKey] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState(existingPassword || '');
+  const [confirmPassword, setConfirmPassword] = useState(existingPassword || '');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleImport = () => {
@@ -131,39 +132,43 @@ const ImportWalletFlow = ({ onComplete, onBack }: ImportWalletFlowProps) => {
         </Tabs>
 
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="password">Set Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
+          {!existingPassword && (
+            <>
+              <div>
+                <Label htmlFor="password">Set Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
 
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type={showPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm password"
-            />
-          </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                />
+              </div>
+            </>
+          )}
 
           <Button
             onClick={handleImport}
