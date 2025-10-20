@@ -152,6 +152,30 @@ const Index = () => {
     setAppState('locked');
   };
 
+  const handleWalletDeleted = async () => {
+    // Reload all wallets after deletion
+    const wallets = walletManager.getAllWallets();
+    setAllWallets(wallets);
+    
+    if (wallets.length === 0) {
+      // No wallets left, go to onboarding
+      setAppState('onboarding');
+      setUnlockedWallet(null);
+      setWalletData(null);
+      setActiveWalletId('');
+    } else {
+      // Switch to first available wallet
+      const nextWallet = wallets[0];
+      walletManager.switchWallet(nextWallet.id);
+      setActiveWalletId(nextWallet.id);
+      
+      // Reload wallet data for the new active wallet
+      if (unlockedWallet) {
+        await loadWalletData();
+      }
+    }
+  };
+
   const handleSwitchWallet = async (walletId: string) => {
     walletManager.switchWallet(walletId);
     setActiveWalletId(walletId);
@@ -241,14 +265,11 @@ const Index = () => {
         <WalletHeader
           smcPrice={sbcPrice}
           onLock={handleLock}
-          onWalletDeleted={() => {
-            setUnlockedWallet(null);
-            setWalletData(null);
-            setAllWallets([]);
-            setAppState('onboarding');
-          }}
+          onWalletDeleted={handleWalletDeleted}
           onAddWallet={() => setShowAddWallet(true)}
           onImportWallet={() => setShowAddWallet(true)}
+          activeWalletId={activeWalletId}
+          walletName={allWallets.find(w => w.id === activeWalletId)?.name}
         />
 
         <WalletSwitcher

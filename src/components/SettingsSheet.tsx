@@ -29,9 +29,11 @@ interface SettingsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onWalletDeleted?: () => void;
+  activeWalletId?: string;
+  walletName?: string;
 }
 
-const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetProps) => {
+const SettingsSheet = ({ open, onOpenChange, onWalletDeleted, activeWalletId, walletName }: SettingsSheetProps) => {
   const [showSeed, setShowSeed] = useState(false);
   const [seedPassword, setSeedPassword] = useState('');
   const [mnemonic, setMnemonic] = useState('');
@@ -105,15 +107,17 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
   };
 
   const handleDeleteWallet = () => {
-    walletManager.deleteWallet();
-    toast({
-      title: 'Wallet deleted',
-      description: 'Your wallet has been removed from this device',
-    });
-    setDeleteDialogOpen(false);
-    onOpenChange(false);
-    if (onWalletDeleted) {
-      onWalletDeleted();
+    if (activeWalletId) {
+      walletManager.deleteWalletById(activeWalletId);
+      toast({
+        title: 'Wallet deleted',
+        description: `${walletName || 'Your wallet'} has been removed from this device`,
+      });
+      setDeleteDialogOpen(false);
+      onOpenChange(false);
+      if (onWalletDeleted) {
+        onWalletDeleted();
+      }
     }
   };
   return (
@@ -351,8 +355,8 @@ const SettingsSheet = ({ open, onOpenChange, onWalletDeleted }: SettingsSheetPro
               Delete Wallet
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. Make sure you have backed up your seed phrase.
-              Without it, you will lose access to your funds permanently.
+              This will permanently delete <strong>{walletName || 'this wallet'}</strong> from your device. 
+              Make sure you have backed up your seed phrase. Without it, you will lose access to your funds permanently.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
