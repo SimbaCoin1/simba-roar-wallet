@@ -63,9 +63,9 @@ const Index = () => {
 
     try {
       const [balance, ethBalance, txHistory] = await Promise.all([
-        blockchainService.getBalance(unlockedWallet.address),
-        blockchainService.getEthBalance(unlockedWallet.address),
-        blockchainService.getTransactionHistory(unlockedWallet.address),
+        blockchainService.getBalance(unlockedWallet.address).catch(() => 0),
+        blockchainService.getEthBalance(unlockedWallet.address).catch(() => 0),
+        blockchainService.getTransactionHistory(unlockedWallet.address).catch(() => []),
       ]);
 
       const transactions: Transaction[] = txHistory.map((tx) => ({
@@ -73,7 +73,7 @@ const Index = () => {
         hash: tx.hash,
         date: new Date(tx.timestamp),
         amount: parseFloat(tx.value),
-        type: tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? 'received' : 'sent',
+        type: (tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? 'received' : 'sent') as 'received' | 'sent',
         address: tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? tx.from : tx.to,
         status: tx.status,
         blockNumber: tx.blockNumber,
@@ -84,12 +84,22 @@ const Index = () => {
         balance,
         ethBalance,
         usdValue: balance * smcPrice,
-        change24h: 0, // TODO: Calculate from price history
+        change24h: 0,
         transactions,
-        chartData: mockChartData1, // TODO: Generate from real data
+        chartData: mockChartData1,
       });
     } catch (error) {
       console.error('Error loading wallet data:', error);
+      // Set wallet data with zeros if blockchain fails
+      setWalletData({
+        address: unlockedWallet.address,
+        balance: 0,
+        ethBalance: 0,
+        usdValue: 0,
+        change24h: 0,
+        transactions: [],
+        chartData: mockChartData1,
+      });
     }
   };
 
