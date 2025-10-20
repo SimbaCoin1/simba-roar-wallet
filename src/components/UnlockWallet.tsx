@@ -10,9 +10,11 @@ import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 
 interface UnlockWalletProps {
   onUnlock: (wallet: { address: string; privateKey: string; mnemonic: string }) => void;
+  onBack: () => void;
+  onRecover: () => void;
 }
 
-const UnlockWallet = ({ onUnlock }: UnlockWalletProps) => {
+const UnlockWallet = ({ onUnlock, onBack, onRecover }: UnlockWalletProps) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,7 +49,15 @@ const UnlockWallet = ({ onUnlock }: UnlockWalletProps) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-background to-muted/20">
-      <Card className="max-w-md w-full p-8">
+      <Card className="max-w-md w-full p-8 relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="absolute top-4 left-4"
+        >
+          ← Back
+        </Button>
         <div className="text-center mb-8">
           <img 
             src={simbaCoinLogo} 
@@ -96,6 +106,15 @@ const UnlockWallet = ({ onUnlock }: UnlockWalletProps) => {
           >
             {loading ? 'Unlocking...' : 'Unlock'}
           </Button>
+
+          <div className="text-center mt-4">
+            <button
+              onClick={onRecover}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+            >
+              Recover wallet using 12-word seed phrase
+            </button>
+          </div>
         </div>
       </Card>
     </div>

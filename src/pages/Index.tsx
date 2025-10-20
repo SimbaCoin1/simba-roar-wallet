@@ -253,7 +253,13 @@ const Index = () => {
   }
 
   if (appState === 'locked') {
-    return <UnlockWallet onUnlock={handleUnlock} />;
+    return (
+      <UnlockWallet 
+        onUnlock={handleUnlock}
+        onBack={() => setAppState('onboarding')}
+        onRecover={() => setAppState('import')}
+      />
+    );
   }
 
   if (!walletData) {
