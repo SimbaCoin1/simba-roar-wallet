@@ -318,7 +318,7 @@ const Index = () => {
 
         <BalanceChart data={walletData.chartData} />
 
-        <ActionButtons onSend={handleSend} onReceive={handleReceive} />
+        <ActionButtons onReceive={handleReceive} />
 
         <TransactionsList transactions={walletData.transactions} />
 
