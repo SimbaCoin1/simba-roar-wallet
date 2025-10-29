@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Send, Loader2, ExternalLink } from 'lucide-react';
 import { blockchainService } from '@/lib/blockchainService';
+import { custodialService } from '@/lib/custodialService';
 import { toast } from '@/hooks/use-toast';
 
 interface SendDialogProps {
@@ -20,6 +21,7 @@ interface SendDialogProps {
   balance: number;
   ethBalance: number;
   onTransactionComplete: () => void;
+  userId?: string;
 }
 
 const SendDialog = ({ 
@@ -28,7 +30,8 @@ const SendDialog = ({
   privateKey, 
   balance, 
   ethBalance,
-  onTransactionComplete 
+  onTransactionComplete,
+  userId
 }: SendDialogProps) => {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
@@ -87,7 +90,7 @@ const SendDialog = ({
       return;
     }
 
-    if (ethBalance < 0.001) {
+    if (!userId && ethBalance < 0.001) {
       toast({
         title: 'Insufficient ETH for gas',
         description: 'You need ETH to pay for transaction fees',
@@ -102,26 +105,41 @@ const SendDialog = ({
   const handleSend = async () => {
     setSending(true);
     try {
-      const result = await blockchainService.sendTransaction(
-        privateKey,
-        recipient,
-        amount
-      );
+      if (userId) {
+        // Custodial withdrawal
+        await custodialService.debitBalance(userId, parseFloat(amount), recipient);
+        setTxHash('pending_withdrawal');
+        setStep('success');
 
-      setTxHash(result.hash);
-      setStep('success');
+        toast({
+          title: 'Withdrawal requested',
+          description: 'Your withdrawal has been submitted for processing',
+        });
 
-      toast({
-        title: 'Transaction sent',
-        description: 'Your transaction has been broadcast to the network',
-      });
+        onTransactionComplete();
+      } else {
+        // Blockchain transaction
+        const result = await blockchainService.sendTransaction(
+          privateKey,
+          recipient,
+          amount
+        );
 
-      // Wait for confirmation in background
-      blockchainService.waitForTransaction(result.hash).then((success) => {
-        if (success) {
-          onTransactionComplete();
-        }
-      });
+        setTxHash(result.hash);
+        setStep('success');
+
+        toast({
+          title: 'Transaction sent',
+          description: 'Your transaction has been broadcast to the network',
+        });
+
+        // Wait for confirmation in background
+        blockchainService.waitForTransaction(result.hash).then((success) => {
+          if (success) {
+            onTransactionComplete();
+          }
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Transaction failed',
@@ -163,14 +181,16 @@ const SendDialog = ({
               <p className="font-mono text-xs break-all">{txHash}</p>
             </div>
 
-            <Button
-              onClick={() => window.open(blockchainService.getEtherscanLink(txHash), '_blank')}
-              variant="outline"
-              className="w-full"
-            >
-              View on Etherscan
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </Button>
+            {!userId && txHash !== 'pending_withdrawal' && (
+              <Button
+                onClick={() => window.open(blockchainService.getEtherscanLink(txHash), '_blank')}
+                variant="outline"
+                className="w-full"
+              >
+                View on Etherscan
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+            )}
 
             <Button onClick={handleClose} className="w-full">
               Done

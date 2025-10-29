@@ -1,230 +1,133 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WalletHeader from '@/components/WalletHeader';
 import WalletCard from '@/components/WalletCard';
-import WalletSwitcher from '@/components/WalletSwitcher';
 import BalanceChart from '@/components/BalanceChart';
 import ActionButtons from '@/components/ActionButtons';
 import TransactionsList from '@/components/TransactionsList';
-import WalletOnboarding from '@/components/WalletOnboarding';
-import CreateWalletFlow from '@/components/CreateWalletFlow';
-import ImportWalletFlow from '@/components/ImportWalletFlow';
-import UnlockWallet from '@/components/UnlockWallet';
 import ReceiveDialog from '@/components/ReceiveDialog';
 import SendDialog from '@/components/SendDialog';
-import AddWalletDialog from '@/components/AddWalletDialog';
-import { walletManager } from '@/lib/walletManager';
-import { blockchainService } from '@/lib/blockchainService';
+import { supabase } from '@/integrations/supabase/client';
+import { custodialService } from '@/lib/custodialService';
 import { balanceTracker } from '@/lib/balanceTracker';
-import { WalletData, Transaction, StoredWallet } from '@/types/wallet';
+import { WalletData, Transaction } from '@/types/wallet';
 import { Loader2 } from 'lucide-react';
-
-type AppState = 'onboarding' | 'create' | 'import' | 'locked' | 'unlocked';
+import { toast } from 'sonner';
+import type { User, Session } from '@supabase/supabase-js';
 
 const Index = () => {
-  const [appState, setAppState] = useState<AppState>('onboarding');
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [walletData, setWalletData] = useState<WalletData | null>(null);
-  const [unlockedWallet, setUnlockedWallet] = useState<{ address: string; privateKey: string; mnemonic: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const [showAddWallet, setShowAddWallet] = useState(false);
-  const [allWallets, setAllWallets] = useState<StoredWallet[]>([]);
-  const [activeWalletId, setActiveWalletId] = useState<string>('');
-  const [walletBalances, setWalletBalances] = useState<Map<string, number>>(new Map());
   const sbcPrice = 1.50; // Mock price for now
+  const depositAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"; // Mock deposit address
 
   useEffect(() => {
-    // Check if wallet exists and load all wallets
-    if (walletManager.hasWallet()) {
-      const wallets = walletManager.getAllWallets();
-      setAllWallets(wallets);
-      const activeWallet = walletManager.getActiveWallet();
-      if (activeWallet) {
-        setActiveWalletId(activeWallet.id);
-      }
-      setAppState('locked');
-    } else {
-      setAppState('onboarding');
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (unlockedWallet) {
-      loadWalletData();
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       
-      // Start auto-lock timer
-      walletManager.startAutoLock(() => {
-        handleLock();
-      });
+      if (session?.user) {
+        setTimeout(() => {
+          initializeUserBalance(session.user.id);
+        }, 0);
+      }
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate('/auth');
+      } else {
+        initializeUserBalance(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (user) {
+      loadWalletData();
 
       // Refresh data periodically (every 30 seconds)
       const dataInterval = setInterval(() => {
         loadWalletData();
       }, 30000);
 
-      // Record balance snapshot every hour
-      const snapshotInterval = setInterval(() => {
-        if (unlockedWallet) {
-          blockchainService.getBalance(unlockedWallet.address)
-            .then(balance => {
-              balanceTracker.addBalanceSnapshot(unlockedWallet.address, balance);
-              balanceTracker.cleanOldSnapshots(unlockedWallet.address);
-            })
-            .catch(err => console.error('Error recording balance snapshot:', err));
-        }
-      }, 60 * 60 * 1000); // Every hour
-
       return () => {
         clearInterval(dataInterval);
-        clearInterval(snapshotInterval);
-        walletManager.clearAutoLock();
       };
     }
-  }, [unlockedWallet, activeWalletId]);
+  }, [user]);
+
+  const initializeUserBalance = async (userId: string) => {
+    try {
+      await custodialService.initializeBalance(userId);
+    } catch (error) {
+      console.error('Error initializing balance:', error);
+    }
+  };
 
   const loadWalletData = async () => {
-    if (!unlockedWallet) return;
+    if (!user) return;
 
     try {
-      const [balance, ethBalance, txHistory] = await Promise.all([
-        blockchainService.getBalance(unlockedWallet.address).catch(() => 0),
-        blockchainService.getEthBalance(unlockedWallet.address).catch(() => 0),
-        blockchainService.getTransactionHistory(unlockedWallet.address).catch(() => []),
+      const [balance, txData] = await Promise.all([
+        custodialService.getBalance(user.id),
+        custodialService.getTransactions(user.id),
       ]);
 
-      const transactions: Transaction[] = txHistory.map((tx) => ({
-        id: tx.hash,
-        hash: tx.hash,
-        date: new Date(tx.timestamp),
-        amount: parseFloat(tx.value),
-        type: (tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? 'received' : 'sent') as 'received' | 'sent',
-        address: tx.to.toLowerCase() === unlockedWallet.address.toLowerCase() ? tx.from : tx.to,
-        status: tx.status,
-        blockNumber: tx.blockNumber,
+      const transactions: Transaction[] = txData.map((tx) => ({
+        id: tx.id,
+        hash: tx.blockchain_hash || tx.id,
+        date: new Date(tx.created_at),
+        amount: parseFloat(tx.amount),
+        type: tx.type === 'deposit' || tx.type === 'credit' ? 'received' : 'sent',
+        address: depositAddress,
+        status: tx.status as 'pending' | 'confirmed' | 'failed',
       }));
 
       // Record balance snapshot and get chart data
-      balanceTracker.addBalanceSnapshot(unlockedWallet.address, balance);
-      balanceTracker.cleanOldSnapshots(unlockedWallet.address);
-      const chartData = balanceTracker.getChartData(unlockedWallet.address);
+      balanceTracker.addBalanceSnapshot(depositAddress, balance);
+      balanceTracker.cleanOldSnapshots(depositAddress);
+      const chartData = balanceTracker.getChartData(depositAddress);
 
       setWalletData({
-        address: unlockedWallet.address,
+        address: depositAddress,
         balance,
-        ethBalance,
+        ethBalance: 0,
         usdValue: balance * sbcPrice,
         change24h: 0,
         transactions,
         chartData,
       });
-
-      // Update balance in the map for the switcher
-      setWalletBalances(prev => {
-        const newMap = new Map(prev);
-        newMap.set(activeWalletId, balance);
-        return newMap;
-      });
     } catch (error) {
       console.error('Error loading wallet data:', error);
-      // Set wallet data with zeros if blockchain fails
-      const chartData = balanceTracker.getChartData(unlockedWallet.address);
-      setWalletData({
-        address: unlockedWallet.address,
-        balance: 0,
-        ethBalance: 0,
-        usdValue: 0,
-        change24h: 0,
-        transactions: [],
-        chartData,
-      });
+      toast.error('Failed to load wallet data');
     }
   };
 
-  const handleUnlock = (wallet: { address: string; privateKey: string; mnemonic: string }) => {
-    setUnlockedWallet(wallet);
-    setAppState('unlocked');
-    // Reload wallet list in case of changes
-    const wallets = walletManager.getAllWallets();
-    setAllWallets(wallets);
-    const activeWallet = walletManager.getActiveWallet();
-    if (activeWallet) {
-      setActiveWalletId(activeWallet.id);
-    }
-  };
-
-  const handleLock = () => {
-    setUnlockedWallet(null);
-    setWalletData(null);
-    setAppState('locked');
-    walletManager.clearAutoLock();
-  };
-
-  const handleWalletCreated = () => {
-    // Reload wallets list
-    const wallets = walletManager.getAllWallets();
-    setAllWallets(wallets);
-    const activeWallet = walletManager.getActiveWallet();
-    if (activeWallet) {
-      setActiveWalletId(activeWallet.id);
-    }
-    setAppState('locked');
-  };
-
-  const handleWalletDeleted = async () => {
-    // Reload all wallets after deletion
-    const wallets = walletManager.getAllWallets();
-    setAllWallets(wallets);
-    
-    if (wallets.length === 0) {
-      // No wallets left, go to onboarding
-      setAppState('onboarding');
-      setUnlockedWallet(null);
-      setWalletData(null);
-      setActiveWalletId('');
-    } else {
-      // Switch to first available wallet
-      const nextWallet = wallets[0];
-      walletManager.switchWallet(nextWallet.id);
-      setActiveWalletId(nextWallet.id);
-      
-      // Reload wallet data for the new active wallet
-      if (unlockedWallet) {
-        await loadWalletData();
-      }
-    }
-  };
-
-  const handleSwitchWallet = async (walletId: string) => {
-    walletManager.switchWallet(walletId);
-    setActiveWalletId(walletId);
-    
-    // Reload wallet data for the newly selected wallet
-    const activeWallet = walletManager.getActiveWallet();
-    if (activeWallet && unlockedWallet) {
-      // Need to unlock the new wallet (password already verified)
-      try {
-        const password = sessionStorage.getItem('temp_password');
-        if (password) {
-          const newUnlockedWallet = walletManager.unlockWallet(password, walletId);
-          setUnlockedWallet(newUnlockedWallet);
-        }
-      } catch (error) {
-        console.error('Error switching wallet:', error);
-      }
-    }
-    
-    walletManager.resetAutoLock(() => handleLock());
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
   };
 
   const handleSend = () => {
     setSendOpen(true);
-    walletManager.resetAutoLock(() => handleLock());
   };
 
   const handleReceive = () => {
     setReceiveOpen(true);
-    walletManager.resetAutoLock(() => handleLock());
   };
 
   const handleTransactionComplete = () => {
@@ -239,49 +142,7 @@ const Index = () => {
     );
   }
 
-  if (appState === 'onboarding') {
-    return (
-      <WalletOnboarding
-        onCreateNew={() => setAppState('create')}
-        onImport={() => setAppState('import')}
-        onLogin={() => setAppState('locked')}
-      />
-    );
-  }
-
-  if (appState === 'create') {
-    const existingPassword = sessionStorage.getItem('temp_password') || undefined;
-    return (
-      <CreateWalletFlow
-        onComplete={handleWalletCreated}
-        onBack={() => setAppState('onboarding')}
-        existingPassword={existingPassword}
-      />
-    );
-  }
-
-  if (appState === 'import') {
-    const existingPassword = sessionStorage.getItem('temp_password') || undefined;
-    return (
-      <ImportWalletFlow
-        onComplete={handleWalletCreated}
-        onBack={() => setAppState('onboarding')}
-        existingPassword={existingPassword}
-      />
-    );
-  }
-
-  if (appState === 'locked') {
-    return (
-      <UnlockWallet 
-        onUnlock={handleUnlock}
-        onBack={() => setAppState('onboarding')}
-        onRecover={() => setAppState('import')}
-      />
-    );
-  }
-
-  if (!walletData) {
+  if (!walletData || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -294,25 +155,18 @@ const Index = () => {
       <div className="max-w-2xl mx-auto">
         <WalletHeader
           smcPrice={sbcPrice}
-          onLock={handleLock}
-          onWalletDeleted={handleWalletDeleted}
-          onAddWallet={() => setShowAddWallet(true)}
-          onImportWallet={() => setShowAddWallet(true)}
-          activeWalletId={activeWalletId}
-          walletName={allWallets.find(w => w.id === activeWalletId)?.name}
-        />
-
-        <WalletSwitcher
-          wallets={allWallets}
-          activeWalletId={activeWalletId}
-          onSwitchWallet={handleSwitchWallet}
-          walletBalances={walletBalances}
+          onLock={handleLogout}
+          onWalletDeleted={handleLogout}
+          onAddWallet={() => {}}
+          onImportWallet={() => {}}
+          activeWalletId=""
+          walletName={user.email || 'Wallet'}
         />
 
         <div className="mb-6 px-6">
           <WalletCard 
             wallet={walletData}
-            onAddWallet={() => setShowAddWallet(true)}
+            onAddWallet={() => {}}
           />
         </div>
 
@@ -322,38 +176,20 @@ const Index = () => {
 
         <TransactionsList transactions={walletData.transactions} />
 
-        {unlockedWallet && (
-          <>
-            <ReceiveDialog
-              open={receiveOpen}
-              onOpenChange={setReceiveOpen}
-              address={unlockedWallet.address}
-            />
+        <ReceiveDialog
+          open={receiveOpen}
+          onOpenChange={setReceiveOpen}
+          address={depositAddress}
+        />
 
-            <SendDialog
-              open={sendOpen}
-              onOpenChange={setSendOpen}
-              privateKey={unlockedWallet.privateKey}
-              balance={walletData.balance}
-              ethBalance={walletData.ethBalance}
-              onTransactionComplete={handleTransactionComplete}
-            />
-          </>
-        )}
-
-        <AddWalletDialog
-          open={showAddWallet}
-          onOpenChange={setShowAddWallet}
-          onCreateNew={() => {
-            setShowAddWallet(false);
-            handleLock();
-            setTimeout(() => setAppState('create'), 100);
-          }}
-          onImport={() => {
-            setShowAddWallet(false);
-            handleLock();
-            setTimeout(() => setAppState('import'), 100);
-          }}
+        <SendDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          privateKey=""
+          balance={walletData.balance}
+          ethBalance={0}
+          onTransactionComplete={handleTransactionComplete}
+          userId={user.id}
         />
       </div>
     </div>
