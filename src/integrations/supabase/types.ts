@@ -68,12 +68,178 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_rewards: {
+        Row: {
+          created_at: string | null
+          daily_yield_percentage: number
+          error_message: string | null
+          id: string
+          investment_id: string
+          investment_usd: number
+          processed_at: string | null
+          reward_date: string
+          sbc_amount: number
+          sbc_price_usd: number
+          status: string | null
+          usd_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_yield_percentage: number
+          error_message?: string | null
+          id?: string
+          investment_id: string
+          investment_usd: number
+          processed_at?: string | null
+          reward_date: string
+          sbc_amount: number
+          sbc_price_usd: number
+          status?: string | null
+          usd_amount: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_yield_percentage?: number
+          error_message?: string | null
+          id?: string
+          investment_id?: string
+          investment_usd?: number
+          processed_at?: string | null
+          reward_date?: string
+          sbc_amount?: number
+          sbc_price_usd?: number
+          status?: string | null
+          usd_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_rewards_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "user_investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investment_tiers: {
+        Row: {
+          created_at: string | null
+          hashpower: string
+          id: number
+          name: string
+          price_usd: number
+          seats: number
+        }
+        Insert: {
+          created_at?: string | null
+          hashpower: string
+          id: number
+          name: string
+          price_usd: number
+          seats: number
+        }
+        Update: {
+          created_at?: string | null
+          hashpower?: string
+          id?: number
+          name?: string
+          price_usd?: number
+          seats?: number
+        }
+        Relationships: []
+      }
+      sbc_price_history: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          price_usd: number
+          source: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          price_usd: number
+          source?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          price_usd?: number
+          source?: string | null
+        }
+        Relationships: []
+      }
+      user_investments: {
+        Row: {
+          created_at: string | null
+          daily_yield_percentage: number
+          id: string
+          investment_amount_usd: number
+          next_reward_date: string
+          payment_transaction_id: string | null
+          purchase_date: string
+          seats: number
+          status: string | null
+          tier_id: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_yield_percentage?: number
+          id?: string
+          investment_amount_usd: number
+          next_reward_date: string
+          payment_transaction_id?: string | null
+          purchase_date?: string
+          seats: number
+          status?: string | null
+          tier_id: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_yield_percentage?: number
+          id?: string
+          investment_amount_usd?: number
+          next_reward_date?: string
+          payment_transaction_id?: string | null
+          purchase_date?: string
+          seats?: number
+          status?: string | null
+          tier_id?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_investments_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "investment_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_sbc_price: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
