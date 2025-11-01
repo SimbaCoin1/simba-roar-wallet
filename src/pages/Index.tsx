@@ -9,6 +9,7 @@ import ReceiveDialog from '@/components/ReceiveDialog';
 import SendDialog from '@/components/SendDialog';
 import { InvestmentCard } from '@/components/InvestmentCard';
 import { RewardsHistory } from '@/components/RewardsHistory';
+import { RewardNotification } from '@/components/RewardNotification';
 import { supabase } from '@/integrations/supabase/client';
 import { custodialService } from '@/lib/custodialService';
 import { balanceTracker } from '@/lib/balanceTracker';
@@ -31,6 +32,8 @@ const Index = () => {
   const [totalEarned, setTotalEarned] = useState(0);
   const [projectedDaily, setProjectedDaily] = useState<{ usd: number; sbc: number } | null>(null);
   const [sbcPrice, setSbcPrice] = useState(0.10);
+  const [showRewardNotification, setShowRewardNotification] = useState(false);
+  const [latestReward, setLatestReward] = useState<{ sbc: number; usd: number } | null>(null);
   const depositAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"; // Mock deposit address
 
   useEffect(() => {
@@ -66,6 +69,33 @@ const Index = () => {
     if (user) {
       loadWalletData();
 
+      // Set up realtime subscription for new rewards
+      const channel = supabase
+        .channel('daily_rewards_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'daily_rewards',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('New reward received!', payload);
+            const newReward = payload.new as any;
+            if (newReward.status === 'processed') {
+              setLatestReward({
+                sbc: Number(newReward.sbc_amount),
+                usd: Number(newReward.usd_amount),
+              });
+              setShowRewardNotification(true);
+              // Reload wallet data to update balance
+              setTimeout(() => loadWalletData(), 1000);
+            }
+          }
+        )
+        .subscribe();
+
       // Refresh data periodically (every 30 seconds)
       const dataInterval = setInterval(() => {
         loadWalletData();
@@ -73,6 +103,7 @@ const Index = () => {
 
       return () => {
         clearInterval(dataInterval);
+        supabase.removeChannel(channel);
       };
     }
   }, [user]);
@@ -164,6 +195,49 @@ const Index = () => {
     loadWalletData();
   };
 
+  const handleTestReward = async () => {
+    if (!user) return;
+
+    try {
+      // First, update the next_reward_date to today to make it eligible
+      const { data: investmentData } = await supabase
+        .from('user_investments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!investmentData) {
+        toast.error('No active investment found. Please purchase an investment tier first.');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      await supabase
+        .from('user_investments')
+        .update({ next_reward_date: today })
+        .eq('id', investmentData.id);
+
+      // Call the edge function to process rewards
+      const { data, error } = await supabase.functions.invoke('process-daily-rewards', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        toast.error('Failed to process reward. Check console for details.');
+        return;
+      }
+
+      console.log('Reward processing result:', data);
+    } catch (error) {
+      console.error('Error testing reward:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -189,6 +263,7 @@ const Index = () => {
           onAddWallet={() => {}}
           onImportWallet={() => {}}
           userEmail={user.email}
+          onTestReward={handleTestReward}
         />
 
         <div className="mb-6 px-4 lg:px-6">
@@ -231,6 +306,15 @@ const Index = () => {
           onTransactionComplete={handleTransactionComplete}
           userId={user.id}
         />
+
+        {latestReward && (
+          <RewardNotification
+            sbcAmount={latestReward.sbc}
+            usdAmount={latestReward.usd}
+            show={showRewardNotification}
+            onClose={() => setShowRewardNotification(false)}
+          />
+        )}
       </div>
     </div>
   );

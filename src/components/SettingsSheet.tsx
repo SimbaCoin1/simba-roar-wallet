@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Lock, HelpCircle, Info } from "lucide-react";
+import { User, Mail, Lock, HelpCircle, Info, TestTube } from "lucide-react";
 import { walletManager } from '@/lib/walletManager';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,12 +17,14 @@ interface SettingsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userEmail?: string;
+  onTestReward?: () => void;
 }
 
-const SettingsSheet = ({ open, onOpenChange, userEmail }: SettingsSheetProps) => {
+const SettingsSheet = ({ open, onOpenChange, userEmail, onTestReward }: SettingsSheetProps) => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [isTestingReward, setIsTestingReward] = useState(false);
 
   const handleChangePassword = () => {
     if (newPassword.length < 8) {
@@ -67,6 +69,29 @@ const SettingsSheet = ({ open, onOpenChange, userEmail }: SettingsSheetProps) =>
       description: 'You have been logged out successfully',
     });
     onOpenChange(false);
+  };
+
+  const handleTestReward = async () => {
+    if (!onTestReward) return;
+    
+    setIsTestingReward(true);
+    try {
+      await onTestReward();
+      toast({
+        title: 'Test reward triggered',
+        description: 'Processing reward... Check for notification!',
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error testing reward:', error);
+      toast({
+        title: 'Failed to trigger reward',
+        description: 'Please try again or check console for details',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTestingReward(false);
+    }
   };
 
   return (
@@ -143,6 +168,32 @@ const SettingsSheet = ({ open, onOpenChange, userEmail }: SettingsSheetProps) =>
           </div>
 
           <Separator />
+
+          {/* Testing Section (Development) */}
+          {onTestReward && (
+            <>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <TestTube className="w-5 h-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Testing</h3>
+                </div>
+                
+                <div className="pl-8">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Simulate receiving your daily mining reward
+                  </p>
+                  <Button
+                    onClick={handleTestReward}
+                    disabled={isTestingReward}
+                    className="w-full h-12 text-base"
+                  >
+                    {isTestingReward ? 'Processing...' : 'Test Daily Reward'}
+                  </Button>
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
 
           {/* Help & Support Section */}
           <div className="space-y-4">

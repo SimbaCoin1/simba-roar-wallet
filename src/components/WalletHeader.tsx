@@ -11,9 +11,10 @@ interface WalletHeaderProps {
   onAddWallet?: () => void;
   onImportWallet?: () => void;
   userEmail?: string;
+  onTestReward?: () => void;
 }
 
-const WalletHeader = ({ smcPrice, onLock, onAddWallet, onImportWallet, userEmail }: WalletHeaderProps) => {
+const WalletHeader = ({ smcPrice, onLock, onAddWallet, onImportWallet, userEmail, onTestReward }: WalletHeaderProps) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
 
@@ -68,6 +69,7 @@ const WalletHeader = ({ smcPrice, onLock, onAddWallet, onImportWallet, userEmail
         open={showSettings} 
         onOpenChange={setShowSettings}
         userEmail={userEmail}
+        onTestReward={onTestReward}
       />
 
       <AddWalletDialog
