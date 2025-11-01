@@ -28,14 +28,14 @@ export const InvestmentCard = ({ investment, projectedDaily }: InvestmentCardPro
         <CardDescription>{investment.tier?.hashpower || 'Hash Power'}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
+        <div className="text-center">
           <p className="text-sm text-muted-foreground">Investment</p>
           <p className="text-2xl font-bold">${investment.investment_amount_usd.toLocaleString()}</p>
         </div>
 
         {projectedDaily && (
-          <div className="p-3 bg-primary/5 rounded-lg">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="p-3 bg-primary/5 rounded-lg text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-primary" />
               <p className="text-sm font-medium">Estimated Daily Reward</p>
             </div>
