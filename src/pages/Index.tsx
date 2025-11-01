@@ -186,11 +186,9 @@ const Index = () => {
         <WalletHeader
           smcPrice={sbcPrice}
           onLock={handleLogout}
-          onWalletDeleted={handleLogout}
           onAddWallet={() => {}}
           onImportWallet={() => {}}
-          activeWalletId=""
-          walletName={user.email || 'Wallet'}
+          userEmail={user.email}
         />
 
         <div className="mb-6 px-6">

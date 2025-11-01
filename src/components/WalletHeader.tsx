@@ -8,14 +8,12 @@ import simbaCoinLogo from '@/assets/simba-coin-logo.png';
 interface WalletHeaderProps {
   smcPrice: number;
   onLock?: () => void;
-  onWalletDeleted?: () => void;
   onAddWallet?: () => void;
   onImportWallet?: () => void;
-  activeWalletId?: string;
-  walletName?: string;
+  userEmail?: string;
 }
 
-const WalletHeader = ({ smcPrice, onLock, onWalletDeleted, onAddWallet, onImportWallet, activeWalletId, walletName }: WalletHeaderProps) => {
+const WalletHeader = ({ smcPrice, onLock, onAddWallet, onImportWallet, userEmail }: WalletHeaderProps) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
 
@@ -69,9 +67,7 @@ const WalletHeader = ({ smcPrice, onLock, onWalletDeleted, onAddWallet, onImport
       <SettingsSheet 
         open={showSettings} 
         onOpenChange={setShowSettings}
-        onWalletDeleted={onWalletDeleted}
-        activeWalletId={activeWalletId}
-        walletName={walletName}
+        userEmail={userEmail}
       />
 
       <AddWalletDialog
