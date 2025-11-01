@@ -7,9 +7,12 @@ import ActionButtons from '@/components/ActionButtons';
 import TransactionsList from '@/components/TransactionsList';
 import ReceiveDialog from '@/components/ReceiveDialog';
 import SendDialog from '@/components/SendDialog';
+import { InvestmentCard } from '@/components/InvestmentCard';
+import { RewardsHistory } from '@/components/RewardsHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { custodialService } from '@/lib/custodialService';
 import { balanceTracker } from '@/lib/balanceTracker';
+import { investmentService } from '@/lib/investmentService';
 import { WalletData, Transaction } from '@/types/wallet';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,7 +26,11 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
-  const sbcPrice = 1.50; // Mock price for now
+  const [investment, setInvestment] = useState<any>(null);
+  const [rewards, setRewards] = useState<any[]>([]);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [projectedDaily, setProjectedDaily] = useState<{ usd: number; sbc: number } | null>(null);
+  const [sbcPrice, setSbcPrice] = useState(0.10);
   const depositAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"; // Mock deposit address
 
   useEffect(() => {
@@ -82,9 +89,13 @@ const Index = () => {
     if (!user) return;
 
     try {
-      const [balance, txData] = await Promise.all([
+      const [balance, txData, activeInvestment, rewardHistory, totalEarnedAmount, currentPrice] = await Promise.all([
         custodialService.getBalance(user.id),
         custodialService.getTransactions(user.id),
+        investmentService.getActiveInvestment(user.id),
+        investmentService.getRewardHistory(user.id),
+        investmentService.getTotalEarned(user.id),
+        investmentService.getCurrentPrice(),
       ]);
 
       const transactions: Transaction[] = txData.map((tx) => ({
@@ -106,11 +117,26 @@ const Index = () => {
       balanceTracker.cleanOldSnapshots(depositAddress);
       const chartData = balanceTracker.getChartData(depositAddress);
 
+      // Update investment data
+      setInvestment(activeInvestment);
+      setRewards(rewardHistory);
+      setTotalEarned(totalEarnedAmount);
+      
+      if (currentPrice) {
+        setSbcPrice(currentPrice);
+      }
+
+      // Calculate projected daily earnings
+      if (activeInvestment) {
+        const projected = await investmentService.getProjectedDaily(activeInvestment);
+        setProjectedDaily(projected);
+      }
+
       setWalletData({
         address: depositAddress,
         balance,
         ethBalance: 0,
-        usdValue: balance * sbcPrice,
+        usdValue: balance * (currentPrice || sbcPrice),
         change24h: 0,
         transactions,
         chartData,
@@ -174,9 +200,21 @@ const Index = () => {
           />
         </div>
 
+        {investment && (
+          <div className="mb-6 px-6">
+            <InvestmentCard investment={investment} projectedDaily={projectedDaily} />
+          </div>
+        )}
+
         <BalanceChart data={walletData.chartData} />
 
         <ActionButtons onReceive={handleReceive} />
+
+        {investment && rewards.length > 0 && (
+          <div className="mb-6 px-6">
+            <RewardsHistory rewards={rewards} totalEarned={totalEarned} />
+          </div>
+        )}
 
         <TransactionsList transactions={walletData.transactions} />
 
