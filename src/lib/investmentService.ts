@@ -60,7 +60,7 @@ export const investmentService = {
       return [];
     }
     
-    return data || [];
+    return (data || []) as DailyReward[];
   },
 
   async getTotalEarned(userId: string): Promise<number> {
