@@ -3,7 +3,7 @@ export interface Transaction {
   hash: string;
   date: Date;
   amount: number;
-  type: 'sent' | 'received';
+  type: 'sent' | 'received' | 'reward';
   address: string;
   status: 'pending' | 'confirmed' | 'failed';
   blockNumber?: number;

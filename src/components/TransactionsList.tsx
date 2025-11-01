@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import { ArrowUpRight, ArrowDownLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ExternalLink, Loader2, Gift } from 'lucide-react';
 import { Transaction } from '@/types/wallet';
 import { format } from 'date-fns';
 import { blockchainService } from '@/lib/blockchainService';
@@ -43,17 +43,23 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
                 <div className={`p-2 rounded-full ${
                   tx.type === 'received' 
                     ? 'bg-success/10 text-success' 
+                    : tx.type === 'reward'
+                    ? 'bg-amber-500/10 text-amber-500'
                     : 'bg-muted text-muted-foreground'
                 }`}>
                   {tx.type === 'received' ? (
                     <ArrowDownLeft className="w-5 h-5" />
+                  ) : tx.type === 'reward' ? (
+                    <Gift className="w-5 h-5" />
                   ) : (
                     <ArrowUpRight className="w-5 h-5" />
                   )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium capitalize">{tx.type}</p>
+                    <p className="font-medium capitalize">
+                      {tx.type === 'reward' ? 'Daily Reward' : tx.type}
+                    </p>
                     {tx.status === 'pending' && (
                       <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                     )}
@@ -62,17 +68,19 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{formatDate(tx.date)}</p>
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    {formatAddress(tx.address)}
-                    <ExternalLink className="w-3 h-3" />
-                  </p>
+                  {tx.type !== 'reward' && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      {formatAddress(tx.address)}
+                      <ExternalLink className="w-3 h-3" />
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
                 <p className={`text-lg font-semibold ${
-                  tx.type === 'received' ? 'text-success' : 'text-foreground'
+                  tx.type === 'received' || tx.type === 'reward' ? 'text-success' : 'text-foreground'
                 }`}>
-                  {tx.type === 'received' ? '+' : '-'}{tx.amount.toFixed(6)}
+                  {tx.type === 'received' || tx.type === 'reward' ? '+' : '-'}{tx.amount.toFixed(6)}
                 </p>
                 <p className="text-sm text-muted-foreground">SBC</p>
               </div>

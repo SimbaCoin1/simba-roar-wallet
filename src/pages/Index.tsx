@@ -92,7 +92,11 @@ const Index = () => {
         hash: tx.blockchain_hash || tx.id,
         date: new Date(tx.created_at),
         amount: parseFloat(tx.amount),
-        type: tx.type === 'deposit' || tx.type === 'credit' ? 'received' : 'sent',
+        type: tx.type === 'deposit' || tx.type === 'credit' 
+          ? 'received' 
+          : tx.type === 'daily_reward' 
+          ? 'reward' 
+          : 'sent',
         address: depositAddress,
         status: tx.status as 'pending' | 'confirmed' | 'failed',
       }));
