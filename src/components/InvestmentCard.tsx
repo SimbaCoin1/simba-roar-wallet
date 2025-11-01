@@ -15,8 +15,6 @@ interface InvestmentCardProps {
 }
 
 export const InvestmentCard = ({ investment, projectedDaily }: InvestmentCardProps) => {
-  const yieldPercent = (investment.daily_yield_percentage * 100).toFixed(2);
-
   return (
     <Card>
       <CardHeader>
@@ -30,15 +28,9 @@ export const InvestmentCard = ({ investment, projectedDaily }: InvestmentCardPro
         <CardDescription>{investment.tier?.hashpower || 'Hash Power'}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Investment</p>
-            <p className="text-2xl font-bold">${investment.investment_amount_usd.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Daily Yield</p>
-            <p className="text-2xl font-bold text-green-600">{yieldPercent}%</p>
-          </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Investment</p>
+          <p className="text-2xl font-bold">${investment.investment_amount_usd.toLocaleString()}</p>
         </div>
 
         {projectedDaily && (
@@ -49,9 +41,6 @@ export const InvestmentCard = ({ investment, projectedDaily }: InvestmentCardPro
             </div>
             <p className="text-lg font-bold">
               {projectedDaily.sbc.toFixed(2)} SBC
-              <span className="text-sm text-muted-foreground ml-2">
-                (${projectedDaily.usd.toFixed(2)})
-              </span>
             </p>
           </div>
         )}
