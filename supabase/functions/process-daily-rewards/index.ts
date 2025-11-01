@@ -8,18 +8,44 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)) {
+    
+    // Create client with service role for database operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { auth: { persistSession: false } }
+    );
+
+    // Verify the request is authenticated (either user or service role)
+    let isAuthorized = false;
+    
+    if (authHeader?.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)) {
+      // Service role key provided
+      isAuthorized = true;
+    } else if (authHeader) {
+      // Check if it's a valid user token
+      const supabaseUser = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!
+      );
+      
+      const { data: { user } } = await supabaseUser.auth.getUser(
+        authHeader.replace('Bearer ', '')
+      );
+      
+      if (user) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { persistSession: false } }
-    );
+    const supabase = supabaseAdmin;
 
     const today = new Date().toISOString().split('T')[0];
     console.log(`🚀 Processing daily rewards for ${today}`);
