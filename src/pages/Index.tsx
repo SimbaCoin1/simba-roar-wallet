@@ -182,7 +182,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full lg:max-w-2xl lg:mx-auto">
         <WalletHeader
           smcPrice={sbcPrice}
           onLock={handleLogout}
@@ -191,7 +191,7 @@ const Index = () => {
           userEmail={user.email}
         />
 
-        <div className="mb-6 px-6">
+        <div className="mb-6 px-4 lg:px-6">
           <WalletCard 
             wallet={walletData}
             onAddWallet={() => {}}
@@ -199,7 +199,7 @@ const Index = () => {
         </div>
 
         {investment && (
-          <div className="mb-6 px-6">
+          <div className="mb-6 px-4 lg:px-6">
             <InvestmentCard investment={investment} projectedDaily={projectedDaily} />
           </div>
         )}
@@ -209,7 +209,7 @@ const Index = () => {
         <ActionButtons onReceive={handleReceive} />
 
         {investment && rewards.length > 0 && (
-          <div className="mb-6 px-6">
+          <div className="mb-6 px-4 lg:px-6">
             <RewardsHistory rewards={rewards} totalEarned={totalEarned} />
           </div>
         )}

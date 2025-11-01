@@ -19,7 +19,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
 
   if (transactions.length === 0) {
     return (
-      <div className="px-6 pb-6">
+      <div className="px-4 lg:px-6 pb-6">
         <h3 className="text-lg font-semibold mb-4">Transactions</h3>
         <Card className="p-8 text-center">
           <p className="text-muted-foreground">No transactions yet</p>
@@ -29,7 +29,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
   }
 
   return (
-    <div className="px-6 pb-6">
+    <div className="px-4 lg:px-6 pb-6">
       <h3 className="text-lg font-semibold mb-4">Transactions</h3>
       <div className="space-y-3">
         {transactions.map((tx) => (

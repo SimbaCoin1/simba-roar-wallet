@@ -7,7 +7,7 @@ interface ActionButtonsProps {
 
 const ActionButtons = ({ onReceive }: ActionButtonsProps) => {
   return (
-    <div className="px-6 mb-6">
+    <div className="px-4 lg:px-6 mb-6">
       <Button 
         onClick={onReceive}
         variant="outline"

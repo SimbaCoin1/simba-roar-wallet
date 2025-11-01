@@ -11,7 +11,7 @@ const BalanceChart = ({ data }: BalanceChartProps) => {
   const hoursTracked = data.length;
   
   return (
-    <Card className="p-6 mx-6 mb-6">
+    <Card className="p-6 mx-4 lg:mx-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-muted-foreground">24h Balance</h3>
         {hasData && hoursTracked < 24 && (
