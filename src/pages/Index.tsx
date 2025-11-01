@@ -199,24 +199,38 @@ const Index = () => {
     if (!user) return;
 
     try {
-      // First, update the next_reward_date to today to make it eligible
-      const { data: investmentData } = await supabase
+      toast.info('Test reward triggered', {
+        description: 'Processing reward... Check for notification!',
+      });
+
+      // First, get the active investment
+      const { data: investmentData, error: fetchError } = await supabase
         .from('user_investments')
         .select('id')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .maybeSingle();
 
-      if (!investmentData) {
+      if (fetchError || !investmentData) {
         toast.error('No active investment found. Please purchase an investment tier first.');
         return;
       }
 
+      // Update the next_reward_date to today
       const today = new Date().toISOString().split('T')[0];
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_investments')
         .update({ next_reward_date: today })
         .eq('id', investmentData.id);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        toast.error('Failed to prepare investment for reward processing.');
+        return;
+      }
+
+      // Wait a bit to ensure database update propagates
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Call the edge function to process rewards
       const { data, error } = await supabase.functions.invoke('process-daily-rewards', {
@@ -232,9 +246,15 @@ const Index = () => {
       }
 
       console.log('Reward processing result:', data);
+      
+      if (data.successful > 0) {
+        toast.success(`Successfully processed ${data.successful} reward(s)!`);
+      } else {
+        toast.warning('No rewards were processed. Check the console for details.');
+      }
     } catch (error) {
       console.error('Error testing reward:', error);
-      throw error;
+      toast.error('An error occurred while processing the reward.');
     }
   };
 
