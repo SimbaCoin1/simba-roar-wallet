@@ -16,24 +16,27 @@ export type Database = {
     Tables: {
       custodial_balances: {
         Row: {
-          balance: number
           created_at: string
           id: string
+          sbc_balance: number
           updated_at: string
+          usd_balance: number | null
           user_id: string
         }
         Insert: {
-          balance?: number
           created_at?: string
           id?: string
+          sbc_balance?: number
           updated_at?: string
+          usd_balance?: number | null
           user_id: string
         }
         Update: {
-          balance?: number
           created_at?: string
           id?: string
+          sbc_balance?: number
           updated_at?: string
+          usd_balance?: number | null
           user_id?: string
         }
         Relationships: []
@@ -43,6 +46,8 @@ export type Database = {
           amount: number
           blockchain_hash: string | null
           created_at: string
+          currency: string | null
+          description: string | null
           id: string
           status: string
           type: string
@@ -52,6 +57,8 @@ export type Database = {
           amount: number
           blockchain_hash?: string | null
           created_at?: string
+          currency?: string | null
+          description?: string | null
           id?: string
           status?: string
           type: string
@@ -61,6 +68,8 @@ export type Database = {
           amount?: number
           blockchain_hash?: string | null
           created_at?: string
+          currency?: string | null
+          description?: string | null
           id?: string
           status?: string
           type?: string
@@ -127,27 +136,33 @@ export type Database = {
       investment_tiers: {
         Row: {
           created_at: string | null
+          daily_yield_percentage: number | null
           hashpower: string
           id: number
           name: string
           price_usd: number
           seats: number
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          daily_yield_percentage?: number | null
           hashpower: string
           id: number
           name: string
           price_usd: number
           seats: number
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          daily_yield_percentage?: number | null
           hashpower?: string
           id?: number
           name?: string
           price_usd?: number
           seats?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -234,15 +249,43 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       get_current_sbc_price: { Args: never; Returns: number }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -369,6 +412,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

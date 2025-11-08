@@ -144,7 +144,7 @@ const Index = () => {
       }));
 
       // Record balance snapshot and get chart data
-      balanceTracker.addBalanceSnapshot(depositAddress, balance);
+      balanceTracker.addBalanceSnapshot(depositAddress, balance.sbc);
       balanceTracker.cleanOldSnapshots(depositAddress);
       const chartData = balanceTracker.getChartData(depositAddress);
 
@@ -165,9 +165,9 @@ const Index = () => {
 
       setWalletData({
         address: depositAddress,
-        balance,
+        balance: balance.sbc,
         ethBalance: 0,
-        usdValue: balance * (currentPrice || sbcPrice),
+        usdValue: balance.sbc * (currentPrice || sbcPrice),
         change24h: 0,
         transactions,
         chartData,
