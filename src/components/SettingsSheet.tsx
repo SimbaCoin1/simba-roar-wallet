@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Mail, Lock, HelpCircle, Info, TestTube } from "lucide-react";
 import { walletManager } from '@/lib/walletManager';
 import { toast } from '@/hooks/use-toast';
@@ -96,12 +97,13 @@ const SettingsSheet = ({ open, onOpenChange, userEmail, onTestReward }: Settings
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[95vh] overflow-y-auto max-w-[414px] mx-auto left-0 right-0">
+      <DrawerContent className="h-[90vh] max-w-[414px] mx-auto left-0 right-0">
         <DrawerHeader className="pb-4">
           <DrawerTitle className="text-2xl">Settings</DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-6 pb-8 space-y-8">
+        <ScrollArea className="flex-1 h-[calc(90vh-80px)]">
+          <div className="px-6 pb-12 space-y-8">
           {/* Account Section */}
           {userEmail && (
             <>
@@ -236,7 +238,8 @@ const SettingsSheet = ({ open, onOpenChange, userEmail, onTestReward }: Settings
           >
             Log Out
           </Button>
-        </div>
+          </div>
+        </ScrollArea>
       </DrawerContent>
     </Drawer>
   );
