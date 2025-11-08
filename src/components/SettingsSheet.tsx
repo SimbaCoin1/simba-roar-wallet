@@ -96,7 +96,7 @@ const SettingsSheet = ({ open, onOpenChange, userEmail, onTestReward }: Settings
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[85vh] overflow-y-auto max-w-[414px] mx-auto left-0 right-0">
+      <DrawerContent className="max-h-[95vh] overflow-y-auto max-w-[414px] mx-auto left-0 right-0">
         <DrawerHeader className="pb-4">
           <DrawerTitle className="text-2xl">Settings</DrawerTitle>
         </DrawerHeader>
