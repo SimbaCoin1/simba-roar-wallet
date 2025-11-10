@@ -16,11 +16,11 @@ export const custodialService = {
   },
 
   async initializeBalance(userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('custodial_balances')
-      .insert({ user_id: userId, sbc_balance: 0, usd_balance: 0 });
+    // Call the secure edge function to initialize balance
+    // This ensures balance creation only happens server-side with proper authorization
+    const { error } = await supabase.functions.invoke('initialize-balance');
 
-    if (error && !error.message.includes('duplicate key')) {
+    if (error && !error.message.includes('already initialized')) {
       throw error;
     }
   },
