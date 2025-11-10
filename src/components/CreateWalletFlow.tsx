@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, Copy, Check, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { walletManager } from '@/lib/walletManager';
 import { toast } from '@/hooks/use-toast';
+import { walletPasswordSchema } from '@/lib/validation';
 
 interface CreateWalletFlowProps {
   onComplete: () => void;
@@ -35,38 +36,25 @@ const CreateWalletFlow = ({ onComplete, onBack, existingPassword }: CreateWallet
   const words = mnemonic.split(' ');
 
   const handleSetPassword = () => {
-    console.log('handleSetPassword called', { passwordLength: password.length, confirmPasswordLength: confirmPassword.length });
+    // Validate password with zod
+    const validation = walletPasswordSchema.safeParse({ password, confirmPassword });
     
-    if (password.length < 8) {
-      console.log('Password too short');
+    if (!validation.success) {
+      const error = validation.error.errors[0];
       toast({
-        title: 'Password too short',
-        description: 'Password must be at least 8 characters',
+        title: 'Validation Error',
+        description: error.message,
         variant: 'destructive',
       });
       return;
     }
 
-    if (password !== confirmPassword) {
-      console.log('Passwords do not match');
-      toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure both passwords are the same',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    console.log('Generating wallet...');
     try {
       const wallet = walletManager.generateWallet();
-      console.log('Wallet generated successfully', { address: wallet.address });
       setMnemonic(wallet.mnemonic);
       setAddress(wallet.address);
       setStep('reveal');
-      console.log('Moving to reveal step');
     } catch (error) {
-      console.error('Error generating wallet:', error);
       toast({
         title: 'Error creating wallet',
         description: 'Failed to generate wallet. Please try again.',
@@ -88,8 +76,6 @@ const CreateWalletFlow = ({ onComplete, onBack, existingPassword }: CreateWallet
   const handleContinue = () => {
     // Add wallet to the multi-wallet array
     walletManager.addWallet(mnemonic, address, password);
-    // Store password temporarily for multi-wallet unlock
-    sessionStorage.setItem('temp_password', password);
     toast({
       title: 'Wallet created successfully',
       description: `Your wallet address: ${address.slice(0, 10)}...`,

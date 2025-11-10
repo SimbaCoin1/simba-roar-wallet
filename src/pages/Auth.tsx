@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { authSchema } from "@/lib/validation";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,12 +20,21 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate input
+    const validation = authSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const error = validation.error.errors[0];
+      toast.error(error.message);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: validation.data.email,
+        password: validation.data.password,
       });
 
       if (error) throw error;
@@ -42,13 +51,16 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+    // Validate input
+    const validation = authSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const error = validation.error.errors[0];
+      toast.error(error.message);
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -56,8 +68,8 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: validation.data.email,
+        password: validation.data.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
         },

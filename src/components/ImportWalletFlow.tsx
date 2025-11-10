@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { walletManager } from '@/lib/walletManager';
 import { toast } from '@/hooks/use-toast';
+import { walletPasswordSchema, mnemonicSchema, privateKeySchema } from '@/lib/validation';
 
 interface ImportWalletFlowProps {
   onComplete: () => void;
@@ -24,19 +25,13 @@ const ImportWalletFlow = ({ onComplete, onBack, existingPassword }: ImportWallet
   const [showPassword, setShowPassword] = useState(false);
 
   const handleImport = () => {
-    if (password.length < 8) {
+    // Validate password
+    const passwordValidation = walletPasswordSchema.safeParse({ password, confirmPassword });
+    if (!passwordValidation.success) {
+      const error = passwordValidation.error.errors[0];
       toast({
-        title: 'Password too short',
-        description: 'Password must be at least 8 characters',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure both passwords are the same',
+        title: 'Validation Error',
+        description: error.message,
         variant: 'destructive',
       });
       return;
@@ -48,20 +43,42 @@ const ImportWalletFlow = ({ onComplete, onBack, existingPassword }: ImportWallet
 
       if (importType === 'mnemonic') {
         const trimmedMnemonic = mnemonic.trim().toLowerCase();
+        
+        // Validate mnemonic format
+        const mnemonicValidation = mnemonicSchema.safeParse({ mnemonic: trimmedMnemonic });
+        if (!mnemonicValidation.success) {
+          const error = mnemonicValidation.error.errors[0];
+          toast({
+            title: 'Invalid Mnemonic',
+            description: error.message,
+            variant: 'destructive',
+          });
+          return;
+        }
+        
         wallet = walletManager.importFromMnemonic(trimmedMnemonic);
         mnemonicToSave = trimmedMnemonic;
       } else {
         const trimmedKey = privateKey.trim();
+        
+        // Validate private key format
+        const keyValidation = privateKeySchema.safeParse({ privateKey: trimmedKey });
+        if (!keyValidation.success) {
+          const error = keyValidation.error.errors[0];
+          toast({
+            title: 'Invalid Private Key',
+            description: error.message,
+            variant: 'destructive',
+          });
+          return;
+        }
+        
         wallet = walletManager.importFromPrivateKey(trimmedKey);
-        // For private key imports, we'll store the private key as the "mnemonic"
-        // This is a simplification - in production you might want a different approach
         mnemonicToSave = trimmedKey;
       }
 
       // Add wallet to the multi-wallet array
       walletManager.addWallet(mnemonicToSave, wallet.address, password);
-      // Store password temporarily for multi-wallet unlock
-      sessionStorage.setItem('temp_password', password);
 
       toast({
         title: 'Wallet imported successfully',

@@ -13,6 +13,7 @@ import { Send, Loader2, ExternalLink } from 'lucide-react';
 import { blockchainService } from '@/lib/blockchainService';
 import { custodialService } from '@/lib/custodialService';
 import { toast } from '@/hooks/use-toast';
+import { transactionSchema } from '@/lib/validation';
 
 interface SendDialogProps {
   open: boolean;
@@ -61,25 +62,20 @@ const SendDialog = ({
   };
 
   const handleContinue = () => {
+    // Validate transaction data with zod
+    const validation = transactionSchema.safeParse({ recipient, amount });
+    
+    if (!validation.success) {
+      const error = validation.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const amountNum = parseFloat(amount);
-
-    if (!blockchainService.isValidAddress(recipient)) {
-      toast({
-        title: 'Invalid address',
-        description: 'Please enter a valid Ethereum address',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (isNaN(amountNum) || amountNum <= 0) {
-      toast({
-        title: 'Invalid amount',
-        description: 'Please enter a valid amount',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     if (amountNum > balance) {
       toast({
