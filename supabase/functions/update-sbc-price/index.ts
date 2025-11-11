@@ -1,10 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1';
 import { corsHeaders } from '../_shared/cors.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 interface UpdatePricePayload {
   price_usd: number;
   notes?: string;
 }
+
+const updatePriceSchema = z.object({
+  price_usd: z.number()
+    .positive('Price must be positive')
+    .min(0.0001, 'Price too low - minimum $0.0001')
+    .max(1000, 'Price unreasonably high - maximum $1000')
+    .finite('Price must be a finite number'),
+  notes: z.string()
+    .max(500, 'Notes too long - maximum 500 characters')
+    .optional()
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,11 +32,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { price_usd, notes }: UpdatePricePayload = await req.json();
-
-    if (!price_usd || price_usd <= 0) {
-      throw new Error('Invalid price_usd. Must be greater than 0.');
+    const requestBody = await req.json();
+    
+    // Validate input with zod schema
+    const validationResult = updatePriceSchema.safeParse(requestBody);
+    
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Validation failed', 
+          details: validationResult.error.errors 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
+
+    const { price_usd, notes } = validationResult.data;
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

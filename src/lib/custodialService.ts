@@ -32,40 +32,13 @@ export const custodialService = {
     type: 'deposit' | 'credit' | 'reward' | 'commission' = 'credit',
     description?: string
   ): Promise<void> {
-    // Get current balance
-    const { data: balanceData, error: balanceError } = await supabase
-      .from('custodial_balances')
-      .select('sbc_balance, usd_balance')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Call the secure edge function to credit balance
+    const { data, error } = await supabase.functions.invoke('credit-balance', {
+      body: { amount, currency, type, description }
+    });
 
-    if (balanceError) throw balanceError;
-
-    const balanceColumn = currency === 'SBC' ? 'sbc_balance' : 'usd_balance';
-    const currentBalance = balanceData?.[balanceColumn] ? Number(balanceData[balanceColumn]) : 0;
-    const newBalance = currentBalance + amount;
-
-    // Update balance
-    const { error: updateError } = await supabase
-      .from('custodial_balances')
-      .update({ [balanceColumn]: newBalance })
-      .eq('user_id', userId);
-
-    if (updateError) throw updateError;
-
-    // Record transaction
-    const { error: txError } = await supabase
-      .from('custodial_transactions')
-      .insert({
-        user_id: userId,
-        amount,
-        currency,
-        type,
-        description,
-        status: 'confirmed'
-      });
-
-    if (txError) throw txError;
+    if (error) throw error;
+    if (!data?.success) throw new Error('Failed to credit balance');
   },
 
   async debitBalance(
@@ -75,45 +48,13 @@ export const custodialService = {
     currency: 'SBC' | 'USD' = 'SBC',
     description?: string
   ): Promise<void> {
-    // Get current balance
-    const { data: balanceData, error: balanceError } = await supabase
-      .from('custodial_balances')
-      .select('sbc_balance, usd_balance')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Call the secure edge function to debit balance
+    const { data, error } = await supabase.functions.invoke('debit-balance', {
+      body: { amount, toAddress, currency, description }
+    });
 
-    if (balanceError) throw balanceError;
-
-    const balanceColumn = currency === 'SBC' ? 'sbc_balance' : 'usd_balance';
-    const currentBalance = balanceData?.[balanceColumn] ? Number(balanceData[balanceColumn]) : 0;
-    
-    if (currentBalance < amount) {
-      throw new Error('Insufficient balance');
-    }
-
-    const newBalance = currentBalance - amount;
-
-    // Update balance
-    const { error: updateError } = await supabase
-      .from('custodial_balances')
-      .update({ [balanceColumn]: newBalance })
-      .eq('user_id', userId);
-
-    if (updateError) throw updateError;
-
-    // Record withdrawal transaction
-    const { error: txError } = await supabase
-      .from('custodial_transactions')
-      .insert({
-        user_id: userId,
-        amount: -amount,
-        currency,
-        type: 'withdrawal',
-        description: description || `Withdrawal to ${toAddress}`,
-        status: 'pending'
-      });
-
-    if (txError) throw txError;
+    if (error) throw error;
+    if (!data?.success) throw new Error('Failed to debit balance');
   },
 
   async getTransactions(userId: string): Promise<any[]> {

@@ -16,14 +16,14 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Verify the request is authenticated (either user or service role)
+    // Verify the request is authenticated (service role or admin user only)
     let isAuthorized = false;
     
     if (authHeader?.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)) {
-      // Service role key provided
+      // Service role key provided (e.g., from cron job)
       isAuthorized = true;
     } else if (authHeader) {
-      // Check if it's a valid user token
+      // Check if it's a valid admin user token
       const supabaseUser = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_ANON_KEY')!
@@ -34,13 +34,21 @@ Deno.serve(async (req) => {
       );
       
       if (user) {
-        isAuthorized = true;
+        // Verify the user has admin role
+        const { data: isAdmin } = await supabaseAdmin.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+        
+        if (isAdmin) {
+          isAuthorized = true;
+        }
       }
     }
 
     if (!isAuthorized) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
+      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

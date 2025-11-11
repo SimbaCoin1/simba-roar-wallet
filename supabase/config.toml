@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.initialize-balance]
 verify_jwt = true
+
+[functions.credit-balance]
+verify_jwt = true
+
+[functions.debit-balance]
+verify_jwt = true
