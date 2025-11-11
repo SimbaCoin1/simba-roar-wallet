@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { authSchema } from "@/lib/validation";
+import simbaLogo from "@/assets/simba-coin-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img 
-            src="/src/assets/simba-coin-logo.png" 
+            src={simbaLogo} 
             alt="Simba Coin" 
             className="w-16 h-16 mx-auto mb-4"
           />
